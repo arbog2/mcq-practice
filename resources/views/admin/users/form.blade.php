@@ -13,6 +13,7 @@
         <label>确认密码<input type="password" name="password_confirmation" required></label>
         @else
         <label>密码<span class="muted">（留空不修改）</span><input type="password" name="password"></label>
+        <label>确认密码<input type="password" name="password_confirmation"></label>
         @endif
         
         <label>角色<select name="role" required>
