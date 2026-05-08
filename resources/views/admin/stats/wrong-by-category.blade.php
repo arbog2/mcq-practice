@@ -55,7 +55,7 @@
         </div>
 
         <div class="card row" style="justify-content:space-between; align-items:flex-end;">
-            <div class="muted">共 {{ $rows->count() }} 条聚合记录（用户分类 × 题库分类 × 题目）。</div>
+            <div class="muted">共 {{ $rows->total() }} 条聚合记录（用户分类 × 题库分类 × 题目）。</div>
             <a class="btn btn-primary" href="{{ $exportUrl }}">导出 CSV（带筛选）</a>
         </div>
 
@@ -99,5 +99,7 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="muted">{{ $rows->links() }}</div>
     </div>
 @endsection

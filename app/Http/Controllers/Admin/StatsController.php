@@ -18,13 +18,15 @@ class StatsController extends Controller
         $organizationUnitId = $request->query('organization_unit_id');
         $categoryId = $request->query('category_id');
 
+        $perPage = (int) config('practice.pagination.questions', 20);
         $rows = $this->wrongStatsQuery($request)
             ->orderByRaw('COALESCE(parent_org_name, "") asc')
             ->orderByRaw('COALESCE(child_org_name, "") asc')
             ->orderBy('category_name')
             ->orderByDesc('wrong_events')
             ->orderBy('question_id')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
 
         $leafOrganizationUnits = OrganizationUnit::query()
             ->whereNotNull('parent_id')
