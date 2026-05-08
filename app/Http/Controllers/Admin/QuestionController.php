@@ -149,6 +149,32 @@ class QuestionController extends Controller
         return response()->json(['message' => '题目已删除。', 'reload' => true]);
     }
 
+    public function moveForm(Question $question)
+    {
+        $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
+        return view('admin.questions.move-form', compact('question', 'categories'));
+    }
+
+    public function moveCategory(Request $request, Question $question)
+    {
+        $validated = $request->validate([
+            'category_id' => ['required', 'exists:categories,id'],
+        ]);
+        $question->update(['category_id' => $validated['category_id']]);
+        return response()->json(['message' => '分类已更新。', 'reload' => true]);
+    }
+
+    public function batchMoveCategory(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:questions,id'],
+            'category_id' => ['required', 'exists:categories,id'],
+        ]);
+        $count = Question::whereIn('id', $validated['ids'])->update(['category_id' => $validated['category_id']]);
+        return response()->json(['message' => "已批量转移 {$count} 道题目。", 'reload' => true]);
+    }
+
     public function importForm()
     {
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
