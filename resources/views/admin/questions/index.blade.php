@@ -31,16 +31,19 @@
 
         <div id="batch-bar" class="card row" style="display:none;justify-content:space-between;align-items:center;">
             <span class="muted" id="batch-count">已选择 0 项</span>
-            <label class="row" style="gap:10px;align-items:center;">
-                <span class="muted">批量转移到</span>
-                <select id="batch-category" style="width:auto;">
-                    <option value="">请选择</option>
-                    @foreach ($categories as $c)
-                        <option value="{{ $c->id }}">{{ $c->name }}</option>
-                    @endforeach
-                </select>
-                <button class="btn btn-primary" id="batch-move-btn" disabled>确认转移</button>
-            </label>
+            <div class="row" style="gap:10px;align-items:center;">
+                <label class="row" style="gap:10px;align-items:center;">
+                    <span class="muted">批量转移到</span>
+                    <select id="batch-category" style="width:auto;">
+                        <option value="">请选择</option>
+                        @foreach ($categories as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                        @endforeach
+                    </select>
+                    <button class="btn btn-primary" id="batch-move-btn" disabled>转移</button>
+                </label>
+                <button class="btn btn-danger" id="batch-delete-btn" disabled>删除</button>
+            </div>
         </div>
 
         <div class="card">
@@ -74,7 +77,17 @@
             </table>
         </div>
 
-        <div class="muted">{{ $questions->withQueryString()->links() }}</div>
+        <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="muted">每页
+                <select id="per-page" onchange="var p=new URLSearchParams(location.search);p.set('per_page',this.value);p.delete('page');location.search=p.toString()" style="width:auto;display:inline-block;padding:4px 8px;">
+                    @foreach([20,40,80,100] as $n)
+                        <option value="{{ $n }}" @if($perPage == $n) selected @endif>{{ $n }}</option>
+                    @endforeach
+                </select>
+                条
+            </div>
+            <div>{{ $questions->withQueryString()->links() }}</div>
+        </div>
     </div>
 
     <div id="ajax-modal" class="modal">
@@ -93,10 +106,18 @@
         var batchCount = document.getElementById('batch-count');
         var batchCategory = document.getElementById('batch-category');
         var batchMoveBtn = document.getElementById('batch-move-btn');
+        var batchDeleteBtn = document.getElementById('batch-delete-btn');
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        function getCheckedIds() {
+            var ids = [];
+            document.querySelectorAll('.q-checkbox:checked').forEach(function(cb) { ids.push(cb.value); });
+            return ids;
+        }
 
         function updateBatchBar() {
-            var checked = document.querySelectorAll('.q-checkbox:checked');
-            var count = checked.length;
+            var ids = getCheckedIds();
+            var count = ids.length;
             if (count > 0) {
                 batchBar.style.display = '';
                 batchCount.textContent = '已选择 ' + count + ' 项';
@@ -104,6 +125,15 @@
                 batchBar.style.display = 'none';
             }
             batchMoveBtn.disabled = count === 0 || !batchCategory.value;
+            batchDeleteBtn.disabled = count === 0;
+        }
+
+        function postJson(url, body) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function(res) { return res.json(); });
         }
 
         if (selectAll) {
@@ -119,22 +149,26 @@
         batchCategory.addEventListener('change', updateBatchBar);
 
         batchMoveBtn.addEventListener('click', function() {
-            var ids = [];
-            document.querySelectorAll('.q-checkbox:checked').forEach(function(cb) { ids.push(cb.value); });
+            var ids = getCheckedIds();
             var catId = batchCategory.value;
             if (ids.length === 0 || !catId) return;
             if (!confirm('确认将 ' + ids.length + ' 道题目转移到所选分类？')) return;
-            var csrf = document.querySelector('meta[name="csrf-token"]').content;
             batchMoveBtn.disabled = true;
             batchMoveBtn.textContent = '转移中...';
-            fetch('{{ route('admin.questions.batch-move') }}', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': csrf, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ ids: ids, category_id: catId })
-            }).then(function(res) { return res.json(); }).then(function(data) {
-                if (data.reload) { location.reload(); }
-                else { alert(data.message || '操作完成'); location.reload(); }
-            }).catch(function() { alert('转移失败'); location.reload(); });
+            postJson('{{ route('admin.questions.batch-move') }}', { ids: ids, category_id: catId })
+                .then(function(data) { location.reload(); })
+                .catch(function() { alert('转移失败'); location.reload(); });
+        });
+
+        batchDeleteBtn.addEventListener('click', function() {
+            var ids = getCheckedIds();
+            if (ids.length === 0) return;
+            if (!confirm('确认删除选中的 ' + ids.length + ' 道题目？此操作不可撤销。')) return;
+            batchDeleteBtn.disabled = true;
+            batchDeleteBtn.textContent = '删除中...';
+            postJson('{{ route('admin.questions.batch-destroy') }}', { ids: ids })
+                .then(function(data) { location.reload(); })
+                .catch(function() { alert('删除失败'); location.reload(); });
         });
     })();
     </script>

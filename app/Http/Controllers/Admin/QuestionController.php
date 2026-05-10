@@ -16,13 +16,15 @@ class QuestionController extends Controller
     public function index(Request $request)
     {
         $categoryId = $request->query('category_id');
+        $perPage = (int) $request->query('per_page', config('practice.pagination.questions', 20));
+        $perPage = in_array($perPage, [20, 40, 80, 100]) ? $perPage : 20;
         $query = Question::query()->with('category')->orderByDesc('id');
         if ($categoryId) {
             $query->where('category_id', $categoryId);
         }
-        $questions = $query->paginate(20)->withQueryString();
+        $questions = $query->paginate($perPage)->withQueryString();
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
-        return view('admin.questions.index', compact('questions', 'categories', 'categoryId'));
+        return view('admin.questions.index', compact('questions', 'categories', 'categoryId', 'perPage'));
     }
 
     public function create(Request $request)
@@ -173,6 +175,16 @@ class QuestionController extends Controller
         ]);
         $count = Question::whereIn('id', $validated['ids'])->update(['category_id' => $validated['category_id']]);
         return response()->json(['message' => "已批量转移 {$count} 道题目。", 'reload' => true]);
+    }
+
+    public function batchDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:questions,id'],
+        ]);
+        $count = Question::whereIn('id', $validated['ids'])->delete();
+        return response()->json(['message' => "已批量删除 {$count} 道题目。", 'reload' => true]);
     }
 
     public function importForm()

@@ -101,6 +101,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/questions-import', [AdminQuestionController::class, 'importStore'])->name('questions.import.store');
 
     Route::post('/questions/batch-move', [AdminQuestionController::class, 'batchMoveCategory'])->name('questions.batch-move');
+    Route::post('/questions/batch-destroy', [AdminQuestionController::class, 'batchDestroy'])->name('questions.batch-destroy');
     Route::get('/questions/{question}/move', [AdminQuestionController::class, 'moveForm'])->name('questions.move.form');
     Route::post('/questions/{question}/move', [AdminQuestionController::class, 'moveCategory'])->name('questions.move');
     Route::resource('questions', AdminQuestionController::class)->except(['show']);
