@@ -16,7 +16,7 @@
         </div>
 
         <div class="card row" style="flex-wrap:wrap; gap:10px;">
-            <form method="GET" action="{{ route('admin.questions.index') }}" class="row" style="gap:10px;">
+            <form method="GET" action="{{ route('admin.questions.index') }}" class="row" style="gap:10px; flex-wrap:wrap;">
                 <label class="row" style="gap:10px; align-items:center;">
                     <span class="muted">分类筛选</span>
                     <select name="category_id" onchange="this.form.submit()">
@@ -25,6 +25,14 @@
                             <option value="{{ $c->id }}" @selected((string)$categoryId === (string)$c->id)>{{ $c->name }}</option>
                         @endforeach
                     </select>
+                </label>
+                <label class="row" style="gap:10px; align-items:center;">
+                    <span class="muted">题干关键词</span>
+                    <input type="text" name="keyword" value="{{ $keyword ?? '' }}" placeholder="搜索题干..." style="width:200px;">
+                    <button class="btn btn-primary" type="submit">搜索</button>
+                    @if ($keyword)
+                        <a class="btn" href="{{ route('admin.questions.index', ['category_id' => $categoryId]) }}">清除</a>
+                    @endif
                 </label>
             </form>
         </div>
@@ -84,7 +92,7 @@
                         <option value="{{ $n }}" @if($perPage == $n) selected @endif>{{ $n }}</option>
                     @endforeach
                 </select>
-                条
+                条，共 {{ $questions->total() }} 道
             </div>
             <div>{{ $questions->withQueryString()->links() }}</div>
         </div>

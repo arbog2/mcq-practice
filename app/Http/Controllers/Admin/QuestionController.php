@@ -16,15 +16,19 @@ class QuestionController extends Controller
     public function index(Request $request)
     {
         $categoryId = $request->query('category_id');
+        $keyword = $request->query('keyword');
         $perPage = (int) $request->query('per_page', config('practice.pagination.questions', 20));
         $perPage = in_array($perPage, [20, 40, 80, 100]) ? $perPage : 20;
         $query = Question::query()->with('category')->orderByDesc('id');
         if ($categoryId) {
             $query->where('category_id', $categoryId);
         }
+        if ($keyword) {
+            $query->where('stem', 'like', '%'.$keyword.'%');
+        }
         $questions = $query->paginate($perPage)->withQueryString();
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
-        return view('admin.questions.index', compact('questions', 'categories', 'categoryId', 'perPage'));
+        return view('admin.questions.index', compact('questions', 'categories', 'categoryId', 'keyword', 'perPage'));
     }
 
     public function create(Request $request)

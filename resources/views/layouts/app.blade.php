@@ -73,8 +73,8 @@
         th { color: var(--muted); font-weight: 600; font-size: 13px; }
         .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
         .status { margin: 10px 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #fff; font-size: 14px; }
-        .pagination { display:flex; gap:6px; list-style:none; padding:0; margin:10px 0; flex-wrap:wrap; align-items:center; }
-        .pagination .page-item { display:inline-block; margin:0; }
+        .pagination { display:flex; gap:6px; list-style:none; padding:0; margin:10px 0; flex-wrap:nowrap; align-items:center; }
+        .pagination .page-item { display:inline-block; margin:0; flex-shrink:0; }
         .pagination .page-link { display:inline-block; padding:4px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; color:var(--text); font-size:14px; text-decoration:none; }
         .pagination .page-item.active .page-link { border-color:var(--primary); color:var(--primary); font-weight:600; }
         .pagination .page-item.disabled .page-link { color:var(--muted); opacity:0.5; cursor:default; }
