@@ -76,7 +76,7 @@
                             $p = isset($row->parent_org_name) ? trim((string) $row->parent_org_name) : '';
                             $c = isset($row->child_org_name) ? trim((string) $row->child_org_name) : '';
                             if ($p !== '' && $c !== '') {
-                                $orgLabel = $p.' — '.$c;
+                                $orgLabel = $p.$c;
                             } elseif ($c !== '') {
                                 $orgLabel = $c;
                             } else {

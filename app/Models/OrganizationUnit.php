@@ -42,7 +42,7 @@ class OrganizationUnit extends Model
     public function fullLabel(): string
     {
         if ($this->parent) {
-            return $this->parent->name.' — '.$this->name;
+            return $this->parent->name.$this->name;
         }
 
         return $this->name;

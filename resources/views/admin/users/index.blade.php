@@ -38,7 +38,7 @@
                             <option value="">全部</option>
                             @foreach($rootOrganizationUnits as $root)
                             @foreach($root->children as $child)
-                            <option value="{{ $child->id }}" data-parent="{{ $root->id }}" @selected((string)$orgLevel2Id === (string)$child->id)>{{ $root->name }} — {{ $child->name }}</option>
+                            <option value="{{ $child->id }}" data-parent="{{ $root->id }}" @selected((string)$orgLevel2Id === (string)$child->id)>{{ $root->name }}{{ $child->name }}</option>
                             @endforeach
                             @endforeach
                         </select>

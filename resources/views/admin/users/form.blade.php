@@ -30,9 +30,9 @@
             <option value="">未分类</option>
             @foreach($leafOrganizationUnits as $unit)
             @if(!is_null($user) && $user->organization_unit_id == $unit->id)
-            <option value="{{ $unit->id }}" selected>{{ $unit->parent?->name }} — {{ $unit->name }}</option>
+            <option value="{{ $unit->id }}" selected>{{ $unit->parent?->name }}{{ $unit->name }}</option>
             @else
-            <option value="{{ $unit->id }}">{{ $unit->parent?->name }} — {{ $unit->name }}</option>
+            <option value="{{ $unit->id }}">{{ $unit->parent?->name }}{{ $unit->name }}</option>
             @endif
             @endforeach
         </select></label>
