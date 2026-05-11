@@ -79,7 +79,7 @@
         .pagination .page-item.active .page-link { border-color:var(--primary); color:var(--primary); font-weight:600; }
         .pagination .page-item.disabled .page-link { color:var(--muted); opacity:0.5; cursor:default; }
         .question-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; min-width:170px; }
-        .single-mode-form { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; }
+        .single-mode-form { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; padding-left:16px; }
         .single-mode-form #questions-container { flex:1; min-width:0; }
         .single-mode-form #single-nav { position:sticky; top:20px; flex-shrink:0; background:#fff; padding:12px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.12); border:1px solid var(--border); }
         .single-mode-form #single-bottom { width:100%; }
