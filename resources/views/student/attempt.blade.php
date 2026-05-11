@@ -58,17 +58,17 @@
                         <button type="button" class="qnum-btn unanswered" data-index="{{ $i }}">{{ $i + 1 }}</button>
                     @endfor
                 </div>
+                <div class="row" style="justify-content:space-between;align-items:center;margin-top:10px;">
+                    <button type="button" class="btn" id="prev-btn" style="visibility:hidden;">上一题</button>
+                    <span class="muted" id="q-counter">1 / {{ $qTotal }}</span>
+                    <button type="button" class="btn" id="next-btn">下一题</button>
+                </div>
             </div>
 
             <div id="single-bottom" style="display:none;">
-                <div class="card row" style="justify-content:space-between;align-items:center;">
-                    <button type="button" class="btn" id="prev-btn" style="visibility:hidden;">上一题</button>
-                    <span class="muted" id="q-counter">1 / {{ $qTotal }}</span>
-                    <div class="row" style="gap:10px;align-items:center;">
-                        <button type="button" class="btn" id="next-btn">下一题</button>
-                        <button class="btn btn-primary" type="submit">提交答卷</button>
-                        <span class="muted">提交后将自动评分并展示解析。</span>
-                    </div>
+                <div class="card row" style="justify-content:flex-start;align-items:center;">
+                    <button class="btn btn-primary" type="submit">提交答卷</button>
+                    <span class="muted">提交后将自动评分并展示解析。</span>
                 </div>
             </div>
 
