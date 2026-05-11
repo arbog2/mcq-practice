@@ -75,8 +75,12 @@
                             <button class="btn btn-primary" onclick="approveUser({{ $user->id }})">通过</button>
                             <button class="btn" onclick="rejectUser({{ $user->id }})">拒绝</button>
                             @endif
+                            @can('update', $user)
                             <button class="btn" onclick="openAjaxModal('{{ route('admin.users.edit', $user) }}', '编辑用户')">编辑</button>
-                            <button class="btn btn-danger" onclick="deleteUser({{ $user->id }})" @disabled($user->id === auth()->id())>删除</button>
+                            @endcan
+                            @can('delete', $user)
+                            <button class="btn btn-danger" onclick="deleteUser({{ $user->id }})">删除</button>
+                            @endcan
                         </td>
                     </tr>
                     @endforeach

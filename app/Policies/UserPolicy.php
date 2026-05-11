@@ -23,12 +23,12 @@ class UserPolicy
 
     public function update(User $actor, User $user): bool
     {
-        return $this->canModifyUser($actor, $user);
+        return $actor->id !== $user->id && $this->canModifyUser($actor, $user);
     }
 
     public function delete(User $actor, User $user): bool
     {
-        return $this->canModifyUser($actor, $user) && $actor->id !== $user->id;
+        return $actor->id !== $user->id && $this->canModifyUser($actor, $user);
     }
 
     public function approve(User $actor, User $user): bool

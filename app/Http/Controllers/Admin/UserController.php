@@ -34,6 +34,12 @@ class UserController extends Controller
             ->with('organizationUnit.parent')
             ->orderByDesc('id');
 
+        /** @var User $actor */
+        $actor = auth()->user();
+        if ($actor && $actor->role === User::ROLE_ADMIN) {
+            $query->where('role', '!=', User::ROLE_SUPER_ADMIN);
+        }
+
         if ($role) {
             $query->where('role', $role);
         }
@@ -216,14 +222,22 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
     private function ensureCanModifyUser(User $actor, User $target): void
     {
+        abort_if($actor->id === $target->id, 403, '不能编辑或删除自己。');
+
         if ($target->isSuperAdmin()) {
             abort_unless($actor->isSuperAdmin(), 403);
 
             return;
         }
 
-        if ($target->role === User::ROLE_ADMIN) {
+        if ($target->isAdmin()) {
             abort_unless($actor->isSuperAdmin(), 403);
+
+            return;
+        }
+
+        if ($actor->isAdmin() && $target->role !== User::ROLE_STUDENT) {
+            abort(403);
         }
     }
 
