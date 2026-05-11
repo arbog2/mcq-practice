@@ -23,7 +23,11 @@ class UserPolicy
 
     public function update(User $actor, User $user): bool
     {
-        return $actor->id !== $user->id && $this->canModifyUser($actor, $user);
+        if ($actor->id === $user->id) {
+            return $actor->isSuperAdmin();
+        }
+
+        return $this->canModifyUser($actor, $user);
     }
 
     public function delete(User $actor, User $user): bool

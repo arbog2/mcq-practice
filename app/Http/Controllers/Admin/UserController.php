@@ -222,7 +222,11 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
     private function ensureCanModifyUser(User $actor, User $target): void
     {
-        abort_if($actor->id === $target->id, 403, '不能编辑或删除自己。');
+        if ($actor->id === $target->id) {
+            abort_unless($actor->isSuperAdmin(), 403, '不能编辑或删除自己。');
+
+            return;
+        }
 
         if ($target->isSuperAdmin()) {
             abort_unless($actor->isSuperAdmin(), 403);
