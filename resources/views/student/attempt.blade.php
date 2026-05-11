@@ -53,11 +53,14 @@
             </div>
 
             <div id="single-nav" style="display:none;">
-                <div id="qgrid" class="question-grid question-grid-floating">
+                <div id="qgrid" class="question-grid">
                     @for($i = 0; $i < $qTotal; $i++)
                         <button type="button" class="qnum-btn unanswered" data-index="{{ $i }}">{{ $i + 1 }}</button>
                     @endfor
                 </div>
+            </div>
+
+            <div id="single-bottom" style="display:none;">
                 <div class="card row" style="justify-content:space-between;align-items:center;">
                     <button type="button" class="btn" id="prev-btn" style="visibility:hidden;">上一题</button>
                     <span class="muted" id="q-counter">1 / {{ $qTotal }}</span>
@@ -82,6 +85,7 @@
         var qCards = document.querySelectorAll('.question-card');
         var qGrid = document.getElementById('qgrid');
         var singleNav = document.getElementById('single-nav');
+        var singleBottom = document.getElementById('single-bottom');
         var allNav = document.getElementById('all-nav');
         var prevBtn = document.getElementById('prev-btn');
         var nextBtn = document.getElementById('next-btn');
@@ -118,19 +122,22 @@
         }
 
         function switchMode(mode) {
+            var form = document.getElementById('attempt-form');
             if (mode === 'single') {
                 qCards.forEach(function(card, i) {
                     card.style.display = i === currentIndex ? '' : 'none';
                 });
                 singleNav.style.display = '';
+                singleBottom.style.display = '';
                 allNav.style.display = 'none';
-                document.getElementById('questions-container').classList.add('single-mode');
+                form.classList.add('single-mode-form');
                 updateGrid();
             } else {
                 qCards.forEach(function(card) { card.style.display = ''; });
                 singleNav.style.display = 'none';
+                singleBottom.style.display = 'none';
                 allNav.style.display = '';
-                document.getElementById('questions-container').classList.remove('single-mode');
+                form.classList.remove('single-mode-form');
             }
         }
 

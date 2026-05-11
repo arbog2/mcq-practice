@@ -79,8 +79,10 @@
         .pagination .page-item.active .page-link { border-color:var(--primary); color:var(--primary); font-weight:600; }
         .pagination .page-item.disabled .page-link { color:var(--muted); opacity:0.5; cursor:default; }
         .question-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; min-width:170px; }
-        .question-grid-floating { position:fixed; left:20px; top:110px; background:#fff; padding:12px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.12); z-index:50; border:1px solid var(--border); }
-        .single-mode #questions-container { margin-left:210px; }
+        .single-mode-form { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; }
+        .single-mode-form #questions-container { flex:1; min-width:0; }
+        .single-mode-form #single-nav { position:sticky; top:20px; flex-shrink:0; background:#fff; padding:12px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.12); border:1px solid var(--border); }
+        .single-mode-form #single-bottom { width:100%; }
         .qnum-btn { width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; padding:0; }
         .qnum-btn.active { border-color:var(--primary); color:var(--primary); font-weight:700; }
         .qnum-btn.answered { background:#fecaca; border-color:#fca5a5; }
