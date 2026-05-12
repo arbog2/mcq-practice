@@ -25,6 +25,15 @@
                 $answer = $answersByQuestionId->get($question->id);
                 $selected = $answer?->selectedOption;
                 $correct = $question->options->firstWhere('is_correct', true);
+                $seed = crc32($attempt->id.'-'.$question->id);
+                $shuffled = $question->options->shuffle($seed)->values();
+                $labels = ['A', 'B', 'C', 'D'];
+                $selectedLabel = null;
+                $correctLabel = null;
+                foreach ($shuffled as $i => $opt) {
+                    if ($selected && $opt->id === $selected->id) $selectedLabel = $labels[$i];
+                    if ($correct && $opt->id === $correct->id) $correctLabel = $labels[$i];
+                }
             @endphp
 
             <div class="card stack">
@@ -44,7 +53,7 @@
                 <div class="muted">
                     你的选择：
                     @if($selected)
-                        <span class="rich-text"><strong>{{ $selected->label }}</strong> {!! $selected->content !!}</span>
+                        <span class="rich-text"><strong>{{ $selectedLabel }}.</strong> {!! $selected->content !!}</span>
                     @else
                         <strong>未作答</strong>
                     @endif
@@ -53,7 +62,7 @@
                 <div class="muted">
                     正确答案：
                     @if($correct)
-                        <span class="rich-text"><strong>{{ $correct->label }}</strong> {!! $correct->content !!}</span>
+                        <span class="rich-text"><strong>{{ $correctLabel }}.</strong> {!! $correct->content !!}</span>
                     @else
                         —
                     @endif

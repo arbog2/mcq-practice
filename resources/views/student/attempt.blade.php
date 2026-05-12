@@ -25,13 +25,17 @@
                 @php $qTotal = $questions->count(); @endphp
 
                 @foreach ($questions as $index => $question)
-                    @php($opts = $question->options->shuffle())
+                    @php
+                        $seed = crc32($attempt->id.'-'.$question->id);
+                        $shuffled = $question->options->shuffle($seed)->values();
+                        $labels = ['A', 'B', 'C', 'D'];
+                    @endphp
                     <div class="card stack question-card" data-index="{{ $index }}">
                         <div><span class="pill">第 {{ $index + 1 }} / {{ $qTotal }} 题</span></div>
                         <div class="rich-text">{!! $question->stem !!}</div>
 
                         <div class="stack" style="gap:10px;">
-                            @foreach ($opts as $opt)
+                            @foreach ($shuffled as $i => $opt)
                                 <label class="row" style="align-items:flex-start; gap:10px;">
                                     <input
                                         type="radio"
@@ -40,7 +44,7 @@
                                         style="margin-top:3px;"
                                         {{ old('answers.'.$question->id) == $opt->id ? 'checked' : '' }}
                                     >
-                                    <span class="rich-text" style="flex:1;"><strong>{{ $opt->label }}.</strong> {!! $opt->content !!}</span>
+                                    <span class="rich-text" style="flex:1;"><strong>{{ $labels[$i] }}.</strong> {!! $opt->content !!}</span>
                                 </label>
                             @endforeach
                         </div>
