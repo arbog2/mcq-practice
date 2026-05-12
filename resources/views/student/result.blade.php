@@ -50,6 +50,12 @@
 
                 <div class="rich-text">{!! $question->stem !!}</div>
 
+                <div class="stack" style="gap:8px; margin:8px 0;">
+                    @foreach ($shuffled as $i => $opt)
+                        <div><span class="rich-text"><strong>{{ $labels[$i] }}.</strong> {!! $opt->content !!}</span></div>
+                    @endforeach
+                </div>
+
                 <div class="muted">
                     你的选择：
                     @if($selected)
