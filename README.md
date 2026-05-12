@@ -90,8 +90,21 @@ php artisan storage:link
 chmod -R 775 storage bootstrap/cache
 chmod -R 775 public/storage
 
-# 9. 可选：创建管理员账号
-php artisan tinker --execute="\App\Models\User::create(['name'=>'管理员','email'=>'admin@example.com','password'=>bcrypt('password'),'role'=>'admin','email_verified_at'=>now()]);"
+# 9. 创建初始用户和演示数据（二选一）
+
+## 方式一：运行种子数据（推荐）
+php artisan db:seed
+
+# 种子数据会创建以下账号（密码均为 password）：
+#   superadmin — super_admin 角色（超级管理员）
+#   admin      — admin 角色（管理员）
+#   student    — student 角色（已通过审核的学员）
+#   pendingstudent — student 角色（待审核的学员）
+# 同时创建示例分类（PHP 基础、MySQL 基础）和演示题目
+
+## 方式二：手动创建 super_admin 账号
+# 若不需要种子数据，可单独创建超级管理员：
+php artisan tinker --execute="\App\Models\User::create(['name'=>'Super Admin','username'=>'superadmin','email'=>'super@example.com','password'=>bcrypt('password'),'role'=>'super_admin','approval_status'=>'approved','approved_at'=>now(),'email_verified_at'=>now()]);"
 ```
 
 ### Web 服务器配置
