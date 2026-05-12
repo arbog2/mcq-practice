@@ -10,6 +10,8 @@ class LogController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         $type = $request->query('type');
         $userId = $request->query('user_id');
 

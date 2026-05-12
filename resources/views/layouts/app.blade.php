@@ -171,7 +171,9 @@
                         <a href="{{ route('admin.users.index') }}">用户</a>
                         <a href="{{ route('admin.organization-units.index') }}">用户分类</a>
                         <a href="{{ route('admin.stats.wrong-by-category') }}">错题统计</a>
-                        <a href="{{ route('admin.logs.index') }}">操作日志</a>
+                        @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('admin.logs.index') }}">操作日志</a>
+                        @endif
                     @else
                         <a href="{{ route('student.dashboard') }}">学员首页</a>
                         <a href="{{ route('student.categories') }}">开始练习</a>
