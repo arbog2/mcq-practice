@@ -63,6 +63,8 @@
 
 ### 安装步骤
 
+#### Linux / macOS
+
 ```bash
 # 1. 进入项目目录
 cd mcq-practice
@@ -86,26 +88,60 @@ php artisan migrate
 # 7. 创建存储链接（用于编辑器图片上传）
 php artisan storage:link
 
-# 8. 设置目录权限（Linux 环境）
+# 8. 设置目录权限
 chmod -R 775 storage bootstrap/cache
 chmod -R 775 public/storage
+```
 
-# 9. 创建初始用户和演示数据（二选一）
+#### Windows (PowerShell)
 
-## 方式一：运行种子数据（推荐）
-# ⚠️ 执行前请先修改 database/seeders/DatabaseSeeder.php 中的用户名、邮箱、密码等默认值
+```powershell
+# 1. 进入项目目录
+cd mcq-practice
+
+# 2. 安装 PHP 依赖
+composer install --no-dev --optimize-autoloader
+
+# 3. 复制环境配置并生成 APP_KEY
+copy .env.example .env
+php artisan key:generate
+
+# 4. 编辑 .env 配置数据库连接
+# DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+
+# 5. 创建数据库（如未创建）
+mysql -u root -p -e "CREATE DATABASE mcq_practice CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# 6. 运行迁移
+php artisan migrate
+
+# 7. 创建存储链接（用于编辑器图片上传）
+php artisan storage:link
+
+# 8. 目录权限（Windows 无需设置，跳过此步）
+```
+
+#### 步骤 9（两种操作系统通用，二选一）
+
+**方式一：运行种子数据（推荐）**  
+⚠️ 执行前请先修改 `database/seeders/DatabaseSeeder.php` 中的用户名、邮箱、密码等默认值
+
+```bash
 php artisan db:seed
+```
 
-# 种子数据会创建以下账号（密码均为 password）：
-#   superadmin — super_admin 角色（超级管理员）
-#   admin      — admin 角色（管理员）
-#   student    — student 角色（已通过审核的学员）
-#   pendingstudent — student 角色（待审核的学员）
-# 同时创建示例分类（PHP 基础、MySQL 基础）和演示题目
+种子数据会创建以下账号（密码均为 `password`）：
+- `superadmin` — `super_admin` 角色（超级管理员）
+- `admin` — `admin` 角色（管理员）
+- `student` — `student` 角色（已通过审核的学员）
+- `pendingstudent` — `student` 角色（待审核的学员）
 
-## 方式二：手动创建 super_admin 账号
-# ⚠️ 执行前请先修改下方命令中的 username、email、password 等参数
-# 若不需要种子数据，可单独创建超级管理员：
+同时创建示例分类（PHP 基础、MySQL 基础）和演示题目。
+
+**方式二：手动创建 `super_admin` 账号**  
+⚠️ 执行前请先修改下方命令中的 `username`、`email`、`password` 等参数
+
+```bash
 php artisan tinker --execute="\App\Models\User::create(['name'=>'Super Admin','username'=>'superadmin','email'=>'super@example.com','password'=>bcrypt('password'),'role'=>'super_admin','approval_status'=>'approved','approved_at'=>now(),'email_verified_at'=>now()]);"
 ```
 
