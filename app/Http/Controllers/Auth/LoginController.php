@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Log;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -46,6 +47,10 @@ class LoginController extends Controller
                     'username' => __('账号审核未通过'),
                 ]);
             }
+        }
+
+        if ($user->isAdmin()) {
+            Log::record('登录后台', 'auth', '管理员 '.$user->username.' 登录');
         }
 
         return redirect()->intended($user->isAdmin() ? route('admin.dashboard') : route('student.dashboard'));

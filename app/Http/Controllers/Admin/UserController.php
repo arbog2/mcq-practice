@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Imports\UsersImport;
+use App\Models\Log;
 use App\Models\OrganizationUnit;
 use App\Models\User;
 use App\Services\UserService;
@@ -104,7 +105,9 @@ class UserController extends Controller
         $this->authorizeAdminRoles();
         $this->ensureRoleAssignable(auth()->user(), $request->validated()['role']);
 
-        $this->userService->createUser($request->validated(), auth()->id());
+        $user = $this->userService->createUser($request->validated(), auth()->id());
+
+        Log::record('创建用户', 'user', '创建用户：'.$user->username, $request->validated());
 
         return response()->json(['message' => '用户已创建。', 'reload' => true]);
     }
@@ -126,6 +129,8 @@ class UserController extends Controller
 
         try {
             Excel::import(new UsersImport, $request->file('file'));
+
+            Log::record('导入用户', 'user', '通过 Excel 导入用户');
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors());
         }
@@ -165,6 +170,8 @@ class UserController extends Controller
 
         $this->userService->updateUser($user, $request->validated());
 
+        Log::record('编辑用户', 'user', '编辑用户：'.$user->username, ['user_id' => $user->id] + $request->validated());
+
 return response()->json(['message' => '用户已更新。', 'reload' => true]);
     }
 
@@ -174,6 +181,8 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
         $this->ensureCanModifyUser(auth()->user(), $user);
 
         abort_if($user->id === auth()->id(), 403);
+
+        Log::record('删除用户', 'user', '删除用户：'.$user->username.' ('.$user->name.')');
 
         $user->delete();
 

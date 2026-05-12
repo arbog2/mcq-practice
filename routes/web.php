@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EditorUploadController as AdminEditorUploadController;
 use App\Http\Controllers\Admin\OrganizationUnitController as AdminOrganizationUnitController;
 use App\Http\Controllers\Admin\QuestionController as AdminQuestionController;
+use App\Http\Controllers\Admin\LogController as AdminLogController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\StatsController as AdminStatsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -87,6 +88,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::post('/users/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
     Route::post('/users/{user}/reject', [AdminUserController::class, 'reject'])->name('users.reject');
+
+    Route::get('/logs', [AdminLogController::class, 'index'])->name('logs.index');
 
     Route::post('/editor/upload-image', [AdminEditorUploadController::class, 'store'])->name('editor.upload-image');
 

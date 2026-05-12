@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Log;
 use App\Models\Question;
 use App\Models\QuestionOption;
 use Illuminate\Http\Request;
@@ -68,7 +69,8 @@ class QuestionController extends Controller
             ];
         }
 
-        DB::transaction(function () use ($validated, $options, $request) {
+        $questionId = null;
+        DB::transaction(function () use ($validated, $options, $request, &$questionId) {
             $question = Question::create([
                 'category_id' => $validated['category_id'],
                 'stem' => $validated['stem'],
@@ -76,6 +78,7 @@ class QuestionController extends Controller
                 'difficulty' => $validated['difficulty'] ?? null,
                 'is_active' => $request->boolean('is_active'),
             ]);
+            $questionId = $question->id;
             foreach ($options as $opt) {
                 QuestionOption::create([
                     'question_id' => $question->id,
@@ -85,6 +88,8 @@ class QuestionController extends Controller
                 ]);
             }
         });
+
+        Log::record('创建题目', 'question', '创建题目 ID：'.$questionId);
 
         return response()->json(['message' => '题目已创建。', 'reload' => true]);
     }
@@ -146,11 +151,14 @@ class QuestionController extends Controller
             }
         });
 
+        Log::record('编辑题目', 'question', '编辑题目 ID：'.$question->id);
+
         return response()->json(['message' => '题目已更新。', 'reload' => true]);
     }
 
     public function destroy(Question $question)
     {
+        Log::record('删除题目', 'question', '删除题目 ID：'.$question->id);
         $question->delete();
         return response()->json(['message' => '题目已删除。', 'reload' => true]);
     }
@@ -166,7 +174,9 @@ class QuestionController extends Controller
         $validated = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
         ]);
+        $oldCategoryId = $question->category_id;
         $question->update(['category_id' => $validated['category_id']]);
+        Log::record('转移题目', 'question', '题目 ID：'.$question->id.' 从分类 '.$oldCategoryId.' 转移到 '.$validated['category_id']);
         return response()->json(['message' => '分类已更新。', 'reload' => true]);
     }
 
@@ -178,6 +188,7 @@ class QuestionController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
         ]);
         $count = Question::whereIn('id', $validated['ids'])->update(['category_id' => $validated['category_id']]);
+        Log::record('批量转移题目', 'question', "批量转移 {$count} 道题目到分类 {$validated['category_id']}");
         return response()->json(['message' => "已批量转移 {$count} 道题目。", 'reload' => true]);
     }
 
@@ -188,6 +199,7 @@ class QuestionController extends Controller
             'ids.*' => ['exists:questions,id'],
         ]);
         $count = Question::whereIn('id', $validated['ids'])->delete();
+        Log::record('批量删除题目', 'question', "批量删除 {$count} 道题目");
         return response()->json(['message' => "已批量删除 {$count} 道题目。", 'reload' => true]);
     }
 
@@ -202,6 +214,7 @@ class QuestionController extends Controller
         $request->validate(['file' => ['required', 'file', 'mimes:xlsx,xls,csv']]);
         try {
             Excel::import(new \App\Imports\QuestionsImport, $request->file('file'));
+            Log::record('导入题目', 'question', '通过 Excel 导入题目');
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors());
         }
