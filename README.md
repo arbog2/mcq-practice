@@ -83,6 +83,8 @@ sudo mysql_secure_installation
 
 #### Windows
 
+> ⚠️ 以下方式仅建议用于**本地测试开发环境**，不建议在生产服务器上使用。
+
 推荐使用 phpEnv 纯绿色集成环境。
 下载地址：https://www.phpenv.cn/download.html
 
