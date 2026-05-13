@@ -83,7 +83,8 @@ sudo mysql_secure_installation
 
 #### Windows
 
-推荐使用 [**phpEnv**](https://www.phpenv.cn/download.html) 纯绿色集成环境。
+推荐使用 phpEnv 纯绿色集成环境。
+下载地址：https://www.phpenv.cn/download.html
 
 - 下载 phpEnv 完整版并解压
 - 打开 phpEnv 内置的 CMD 或 PowerShell 窗口运行下方的安装步骤
