@@ -56,10 +56,38 @@
 
 ### 环境要求
 
-- PHP >= 8.2
+- PHP >= 8.2（需安装 bcmath, ctype, fileinfo, json, mbstring, openssl, pdo, tokenizer, xml 扩展）
 - Composer
 - MySQL 5.7+ / MariaDB 10.3+
-- 扩展：BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO, Tokenizer, XML
+- 如使用图片上传功能还需：`php.ini` 中 `file_uploads = On`、`upload_max_filesize` 和 `post_max_size` 足够大
+
+### 本地环境搭建
+
+#### Linux（Ubuntu / Debian）
+
+```bash
+# 安装 PHP 8.2 及扩展
+sudo apt update
+sudo apt install -y php8.2 php8.2-cli php8.2-fpm php8.2-mysql php8.2-bcmath php8.2-ctype \
+    php8.2-fileinfo php8.2-mbstring php8.2-xml php8.2-tokenizer php8.2-json curl unzip
+
+# 安装 Composer
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+php -r "unlink('composer-setup.php');"
+
+# 安装 MySQL
+sudo apt install -y mysql-server
+sudo mysql_secure_installation
+```
+
+#### Windows
+
+推荐使用 [**phpEnv**](https://www.phpenv.cn/download.html) 纯绿色集成环境。
+
+- 下载 phpEnv 完整版并解压
+- 打开 phpEnv 内置的 CMD 或 PowerShell 窗口运行下方的安装步骤
+- phpEnv 已内置 PHP、MySQL、Composer、Nginx/Apache，无需单独安装
 
 ### 安装步骤
 
