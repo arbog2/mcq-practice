@@ -231,7 +231,7 @@ php artisan tinker --execute="\App\Models\User::create(['name'=>'管理员','ema
 
 ## 欢迎加群交流
 
-qq群号：1064744006
+qq群号：1064744006，进群有python题库
 
 <img src="docs/images/20260514194228_66_2.jpg" alt="交流QQ群" width="300">
 
