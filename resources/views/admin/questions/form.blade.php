@@ -1,4 +1,4 @@
-<form method="post" action="{{ $action }}" id="question-form">
+<form method="post" action="{{ $action }}" id="question-form" novalidate>
     @csrf
     @if($method === 'PUT')
     <input type="hidden" name="_method" value="PUT">
