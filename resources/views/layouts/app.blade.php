@@ -83,6 +83,11 @@
         .single-mode-form #questions-container { flex:1; min-width:0; }
         .single-mode-form #single-nav { position:sticky; top:20px; flex-shrink:0; display:flex; flex-direction:column; background:#fff; padding:12px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.12); border:1px solid var(--border); }
         .single-mode-form #single-bottom { width:100%; }
+        @media (max-width:767px) {
+            .mobile-mode-form #questions-container .question-card { margin:0 -4px; }
+            .mobile-mode-form #mobile-nav-top .card { border-radius:0; border-left:none; border-right:none; }
+            #mode-select { display:none; }
+        }
         .qnum-btn { width:36px; height:36px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; padding:0; }
         .qnum-btn.active { border-color:var(--primary); color:var(--primary); font-weight:700; }
         .qnum-btn.answered { background:#fecaca; border-color:#fca5a5; }

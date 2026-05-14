@@ -56,6 +56,14 @@
                 @endforeach
             </div>
 
+            <div id="mobile-nav-top" style="display:none;">
+                <div class="card row" style="justify-content:space-between;align-items:center;">
+                    <button type="button" class="btn" id="m-prev-btn" style="visibility:hidden;">上一题</button>
+                    <span class="muted" id="m-counter">1 / {{ $qTotal }}</span>
+                    <button type="button" class="btn" id="m-next-btn">下一题</button>
+                </div>
+            </div>
+
             <div id="single-nav" style="display:none;">
                 <div id="qgrid" class="question-grid">
                     @for($i = 0; $i < $qTotal; $i++)
@@ -76,6 +84,10 @@
                 </div>
             </div>
 
+            <div id="mobile-bottom" style="display:none;">
+                <button class="btn btn-primary" type="submit" style="width:100%;">提交答卷</button>
+            </div>
+
             <div id="all-nav" class="card row">
                 <button class="btn btn-primary" type="submit">提交答卷</button>
                 <span class="muted">提交后将自动评分并展示解析。</span>
@@ -94,8 +106,14 @@
         var prevBtn = document.getElementById('prev-btn');
         var nextBtn = document.getElementById('next-btn');
         var qCounter = document.getElementById('q-counter');
+        var mobileNavTop = document.getElementById('mobile-nav-top');
+        var mobileBottom = document.getElementById('mobile-bottom');
+        var mPrevBtn = document.getElementById('m-prev-btn');
+        var mNextBtn = document.getElementById('m-next-btn');
+        var mCounter = document.getElementById('m-counter');
         var currentIndex = 0;
         var total = qCards.length;
+        var isMobile = window.innerWidth < 768;
 
         function getAnswered() {
             var answered = {};
@@ -108,10 +126,12 @@
 
         function updateGrid() {
             var answered = getAnswered();
-            var btns = qGrid.querySelectorAll('.qnum-btn');
-            btns.forEach(function(btn, i) {
-                btn.className = 'qnum-btn' + (answered[i] ? ' answered' : ' unanswered') + (i === currentIndex ? ' active' : '');
-            });
+            if (qGrid) {
+                var btns = qGrid.querySelectorAll('.qnum-btn');
+                btns.forEach(function(btn, i) {
+                    btn.className = 'qnum-btn' + (answered[i] ? ' answered' : ' unanswered') + (i === currentIndex ? ' active' : '');
+                });
+            }
         }
 
         function showQuestion(index) {
@@ -119,21 +139,42 @@
                 card.style.display = i === index ? '' : 'none';
             });
             currentIndex = index;
-            qCounter.textContent = (index + 1) + ' / ' + total;
-            prevBtn.style.visibility = index === 0 ? 'hidden' : 'visible';
-            nextBtn.style.visibility = index === total - 1 ? 'hidden' : 'visible';
+            var text = (index + 1) + ' / ' + total;
+            if (qCounter) qCounter.textContent = text;
+            if (mCounter) mCounter.textContent = text;
+            var hidden = index === 0 ? 'hidden' : 'visible';
+            var hiddenEnd = index === total - 1 ? 'hidden' : 'visible';
+            if (prevBtn) prevBtn.style.visibility = hidden;
+            if (nextBtn) nextBtn.style.visibility = hiddenEnd;
+            if (mPrevBtn) mPrevBtn.style.visibility = hidden;
+            if (mNextBtn) mNextBtn.style.visibility = hiddenEnd;
             updateGrid();
         }
 
         function switchMode(mode) {
             var form = document.getElementById('attempt-form');
-            if (mode === 'single') {
+            if (mode === 'mobile') {
+                qCards.forEach(function(card, i) {
+                    card.style.display = i === currentIndex ? '' : 'none';
+                });
+                mobileNavTop.style.display = '';
+                mobileBottom.style.display = '';
+                singleNav.style.display = 'none';
+                singleBottom.style.display = 'none';
+                allNav.style.display = 'none';
+                form.classList.remove('single-mode-form');
+                form.classList.add('mobile-mode-form');
+                updateGrid();
+            } else if (mode === 'single') {
                 qCards.forEach(function(card, i) {
                     card.style.display = i === currentIndex ? '' : 'none';
                 });
                 singleNav.style.display = '';
                 singleBottom.style.display = '';
                 allNav.style.display = 'none';
+                mobileNavTop.style.display = 'none';
+                mobileBottom.style.display = 'none';
+                form.classList.remove('mobile-mode-form');
                 form.classList.add('single-mode-form');
                 updateGrid();
             } else {
@@ -141,7 +182,25 @@
                 singleNav.style.display = 'none';
                 singleBottom.style.display = 'none';
                 allNav.style.display = '';
-                form.classList.remove('single-mode-form');
+                mobileNavTop.style.display = 'none';
+                mobileBottom.style.display = 'none';
+                form.classList.remove('single-mode-form', 'mobile-mode-form');
+            }
+        }
+
+        function goPrev() { if (currentIndex > 0) showQuestion(currentIndex - 1); }
+        function goNext() { if (currentIndex < total - 1) showQuestion(currentIndex + 1); }
+
+        function detectAndSwitch() {
+            var wasMobile = isMobile;
+            isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                modeSelect.value = 'mobile';
+                switchMode('mobile');
+            } else if (wasMobile) {
+                var saved = localStorage.getItem('attempt-mode');
+                modeSelect.value = saved === 'single' ? 'single' : 'all';
+                switchMode(modeSelect.value);
             }
         }
 
@@ -154,40 +213,50 @@
             });
         }
 
-        if (prevBtn) {
-            prevBtn.addEventListener('click', function() {
-                if (currentIndex > 0) showQuestion(currentIndex - 1);
-            });
-        }
-
-        if (nextBtn) {
-            nextBtn.addEventListener('click', function() {
-                if (currentIndex < total - 1) showQuestion(currentIndex + 1);
-            });
-        }
+        if (prevBtn) prevBtn.addEventListener('click', goPrev);
+        if (nextBtn) nextBtn.addEventListener('click', goNext);
+        if (mPrevBtn) mPrevBtn.addEventListener('click', goPrev);
+        if (mNextBtn) mNextBtn.addEventListener('click', goNext);
 
         document.getElementById('attempt-form').addEventListener('change', function(e) {
-            if (e.target && e.target.type === 'radio') {
-                updateGrid();
+            if (e.target && e.target.type === 'radio') updateGrid();
+        });
+
+        // Touch swipe
+        var touchStartX = 0;
+        var touchEndX = 0;
+        var formEl = document.getElementById('attempt-form');
+        formEl.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        formEl.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            var diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) goNext(); else goPrev();
+            }
+        }, { passive: true });
+
+        modeSelect.addEventListener('change', function() {
+            if (window.innerWidth < 768) return;
+            if (this.value !== 'mobile') {
+                switchMode(this.value);
+                localStorage.setItem('attempt-mode', this.value);
             }
         });
 
-        modeSelect.addEventListener('change', function() {
-            switchMode(this.value);
-        });
+        window.addEventListener('resize', detectAndSwitch);
 
-        // Save mode preference
         var savedMode = localStorage.getItem('attempt-mode');
-        if (savedMode === 'single') {
+        if (window.innerWidth < 768) {
+            modeSelect.value = 'mobile';
+            switchMode('mobile');
+        } else if (savedMode === 'single') {
             modeSelect.value = 'single';
             switchMode('single');
         } else {
             switchMode('all');
         }
-
-        modeSelect.addEventListener('change', function() {
-            localStorage.setItem('attempt-mode', this.value);
-        });
     })();
     </script>
 @endsection
