@@ -229,9 +229,11 @@ server {
 php artisan tinker --execute="\App\Models\User::create(['name'=>'管理员','email'=>'admin@example.com','password'=>bcrypt('your-password'),'role'=>'admin','email_verified_at'=>now()]);"
 ```
 
-## 截图
+## 欢迎加群交流
 
-![交流QQ群](docs/images/20260514194228_66_2.jpg)
+qq群号：1064744006
+
+<img src="docs/images/20260514194228_66_2.jpg" alt="交流QQ群" width="300">
 
 ## License
 
