@@ -231,7 +231,7 @@ php artisan tinker --execute="\App\Models\User::create(['name'=>'管理员','ema
 
 ## 截图
 
-（可自行补充截图）
+![交流QQ群](docs/images/20260514194228_66_2.jpg)
 
 ## License
 
