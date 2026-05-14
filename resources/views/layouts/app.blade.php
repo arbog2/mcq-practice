@@ -226,7 +226,7 @@ function openAjaxModal(url, title) {
 }
 
 function closeAjaxModal() {
-    if (typeof tinymce !== 'undefined') { tinymce.remove('.tinymce'); }
+    if (typeof tinymce !== 'undefined') { tinymce.remove('textarea.rich-text'); }
     document.getElementById('ajax-modal').setAttribute('data-open', '');
     document.body.style.overflow = '';
 }
@@ -270,12 +270,12 @@ document.addEventListener('submit', function(e) {
     if (typeof tinymce !== 'undefined') { tinymce.triggerSave(); }
     
     var btn = form.querySelector('button[type="submit"]');
-    if (btn) { btn.disabled = true; btn.textContent = '提交中...'; }
+    if (btn) { btn.dataset.origText = btn.textContent; btn.disabled = true; btn.textContent = '提交中...'; }
     
     var formData = new FormData(form);
     var methodInput = form.querySelector('input[name="_method"]');
-    if (methodInput && methodInput.value === 'PUT') {
-        formData.append('_method', 'PUT');
+    if (methodInput) {
+        formData.set('_method', methodInput.value);
     }
     
     fetch(form.action, {
@@ -285,19 +285,23 @@ document.addEventListener('submit', function(e) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
         }
-    }).then(function(res) { 
-        return res.json(); 
+    }).then(function(res) {
+        if (!res.ok) {
+            return res.json().then(function(err) {
+                throw new Error(err.message || '服务器错误');
+            });
+        }
+        return res.json();
     }).then(function(data) {
         if (data.reload) {
             location.reload();
         } else if (data.message) {
             alert(data.message);
-            if (btn) btn.disabled = false;
+            if (btn) { btn.disabled = false; btn.textContent = btn.dataset.origText || '提交'; }
         }
     }).catch(function(err) { 
-        console.error(err);
-        alert('提交失败: ' + err.message); 
-        if (btn) btn.disabled = false; 
+        alert(err.message || '提交失败，请重试');
+        if (btn) { btn.disabled = false; btn.textContent = btn.dataset.origText || '提交'; }
     });
 });
 
