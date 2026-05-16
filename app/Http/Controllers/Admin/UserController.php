@@ -139,9 +139,10 @@ class UserController extends Controller
             $import = new UsersImport;
             Excel::import($import, $request->file('file'));
 
+            $progress = Cache::get('import_progress_'.auth()->id(), ['total' => 0]);
             Log::record('导入用户', 'user', '通过 Excel 导入用户');
 
-            return response()->json(['success' => true, 'message' => '导入完成。']);
+            return response()->json(['success' => true, 'message' => '导入完成。', 'total' => $progress['total']]);
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'errors' => $e->errors()], 422);
         }

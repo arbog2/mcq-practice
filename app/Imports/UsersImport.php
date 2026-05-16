@@ -19,7 +19,43 @@ class UsersImport implements ToCollection, WithHeadingRow
     {
         $errors = [];
         $usersData = [];
-        $organizationUnits = [];
+
+        // -- Pre-load existing emails into a map: email => username --
+        $fileEmails = [];
+        foreach ($rows as $row) {
+            $r = $row instanceof Collection ? $row->toArray() : (array) $row;
+            $email = trim((string) ($r['email'] ?? ''));
+            if ($email !== '') {
+                $fileEmails[] = $email;
+            }
+        }
+
+        $existingEmailMap = [];
+        if (! empty($fileEmails)) {
+            $existing = User::whereIn('email', $fileEmails)
+                ->get(['username', 'email']);
+            foreach ($existing as $user) {
+                $existingEmailMap[$user->email] = $user->username;
+            }
+        }
+
+        // -- Pre-load organization units into lookup maps --
+        $allUnits = OrganizationUnit::with('parent')->get();
+
+        $parentMap = [];   // name => OrganizationUnit (for root units)
+        $childMap = [];    // "parentName|childName" => OrganizationUnit (for leaf units)
+
+        foreach ($allUnits as $unit) {
+            if ($unit->parent_id === null) {
+                $parentMap[$unit->name] = $unit;
+            } else {
+                $parentName = $unit->parent?->name;
+                if ($parentName !== null) {
+                    $childMap[$parentName . '|' . $unit->name] = $unit;
+                }
+            }
+        }
+
         $seenUsernames = [];
         $seenEmails = [];
 
@@ -67,12 +103,8 @@ class UsersImport implements ToCollection, WithHeadingRow
                 }
                 $seenEmails[$email] = true;
 
-                $conflict = User::query()
-                    ->where('email', $email)
-                    ->where('username', '!=', $username)
-                    ->exists();
-
-                if ($conflict) {
+                // Check against pre-loaded existing emails (different username)
+                if (isset($existingEmailMap[$email]) && $existingEmailMap[$email] !== $username) {
                     $errors[] = __('第 :row 行：邮箱已被其他用户使用。', ['row' => $rowNumber]);
                     continue;
                 }
@@ -81,26 +113,29 @@ class UsersImport implements ToCollection, WithHeadingRow
             $organizationUnitId = null;
 
             if ($level1 !== '' && $level2 !== '') {
-                $parentKey = $level1;
-                if (! isset($organizationUnits[$parentKey])) {
-                    $parent = OrganizationUnit::query()->firstOrCreate(
-                        ['parent_id' => null, 'name' => $level1],
-                        ['sort_order' => 0]
-                    );
-                    $organizationUnits[$parentKey] = $parent;
+                // Look up parent from pre-loaded map, or create
+                if (isset($parentMap[$level1])) {
+                    $parent = $parentMap[$level1];
                 } else {
-                    $parent = $organizationUnits[$parentKey];
+                    $parent = OrganizationUnit::create([
+                        'parent_id' => null,
+                        'name' => $level1,
+                        'sort_order' => 0,
+                    ]);
+                    $parentMap[$level1] = $parent;
                 }
 
-                $childKey = $level1.'|'.$level2;
-                if (! isset($organizationUnits[$childKey])) {
-                    $child = OrganizationUnit::query()->firstOrCreate(
-                        ['parent_id' => $parent->id, 'name' => $level2],
-                        ['sort_order' => 0]
-                    );
-                    $organizationUnits[$childKey] = $child;
+                // Look up child from pre-loaded map, or create
+                $childKey = $level1 . '|' . $level2;
+                if (isset($childMap[$childKey])) {
+                    $child = $childMap[$childKey];
                 } else {
-                    $child = $organizationUnits[$childKey];
+                    $child = OrganizationUnit::create([
+                        'parent_id' => $parent->id,
+                        'name' => $level2,
+                        'sort_order' => 0,
+                    ]);
+                    $childMap[$childKey] = $child;
                 }
 
                 $organizationUnitId = $child->id;

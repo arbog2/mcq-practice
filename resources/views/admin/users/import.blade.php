@@ -42,17 +42,7 @@
                 <div id="progress-bar" style="width:0%;height:100%;background:#0d6efd;border-radius:10px;transition:width 0.3s;"></div>
             </div>
             <p class="muted" id="progress-text">准备中...</p>
-        </div>
-    </div>
-
-    <div id="result-modal" class="modal" style="display:none;">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content" style="max-width:600px;">
-            <div class="modal-header">
-                <h3 id="result-title"></h3>
-                <button class="modal-close" onclick="closeResultModal()">&times;</button>
-            </div>
-            <div class="modal-body stack" id="result-body"></div>
+            <button id="result-btn" class="btn btn-primary" style="display:none;margin-top:12px;">确定</button>
         </div>
     </div>
 
@@ -60,36 +50,24 @@
     var overlay = document.getElementById('import-overlay');
     var progressBar = document.getElementById('progress-bar');
     var progressText = document.getElementById('progress-text');
-    var resultModal = document.getElementById('result-modal');
-    var resultTitle = document.getElementById('result-title');
-    var resultBody = document.getElementById('result-body');
     var startBtn = document.getElementById('start-btn');
     var fileInput = document.getElementById('file');
     var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-    var importDone = false;
-    var resultShown = false;
+    var resultBtn = document.getElementById('result-btn');
+    var finished = false;
 
     overlay.style.display = 'none';
 
-    function showImportResult(type, title, message) {
-        if (resultShown) return;
-        resultShown = true;
-        overlay.style.display = 'none';
-        startBtn.disabled = false;
-        startBtn.textContent = '开始导入';
-        resultTitle.textContent = title;
-        resultTitle.style.color = type === 'success' ? '#198754' : '#dc3545';
-        resultBody.innerHTML = '<p>' + message + '</p>';
+    function showResult(type, message) {
+        progressBar.style.background = type === 'success' ? '#198754' : '#dc3545';
+        progressText.textContent = message;
+        progressText.style.color = type === 'success' ? '#198754' : '#dc3545';
         if (type === 'success') {
-            resultBody.innerHTML += '<button class="btn btn-primary" onclick="closeResultModal();location.href=\'{{ route('admin.users.index') }}\'">查看用户列表</button>';
-        } else {
-            resultBody.innerHTML += '<button class="btn" onclick="closeResultModal()">关闭</button>';
+            resultBtn.style.display = '';
+            resultBtn.onclick = function() {
+                location.href = '{{ route('admin.users.index') }}';
+            };
         }
-        resultModal.style.display = '';
-    }
-
-    function closeResultModal() {
-        resultModal.style.display = 'none';
     }
 
     document.getElementById('import-form').addEventListener('submit', function(e) {
@@ -97,35 +75,32 @@
 
         if (!fileInput.files.length) return;
 
-        importDone = false;
-        resultShown = false;
+        finished = false;
 
         startBtn.disabled = true;
         startBtn.textContent = '导入中...';
 
         overlay.style.display = 'flex';
         progressBar.style.width = '0%';
+        progressBar.style.background = '#0d6efd';
+        progressText.style.color = '';
         progressText.textContent = '正在准备导入...';
 
-        var pollInterval = setInterval(function() {
+        var pollTimer = setInterval(function() {
+            if (finished) return;
             fetch('{{ route('admin.import.progress') }}', {
                 headers: { 'Accept': 'application/json' }
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                if (finished) return;
                 if (data.total > 0) {
                     var pct = Math.round(data.current / data.total * 100);
                     progressBar.style.width = pct + '%';
                     progressText.textContent = '已导入 ' + data.current + ' / ' + data.total + ' 条';
-
-                    if (data.completed) {
-                        importDone = true;
-                        clearInterval(pollInterval);
-                        showImportResult('success', '导入成功', '共导入 ' + data.total + ' 个用户。');
-                    }
                 }
             });
-        }, 1500);
+        }, 800);
 
         var formData = new FormData(this);
 
@@ -134,27 +109,32 @@
             body: formData,
             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
         })
-        .then(function(res) {
-            clearInterval(pollInterval);
-            return res.json();
-        })
+        .then(function(res) { return res.json(); })
         .then(function(data) {
-            if (resultShown) return;
+            finished = true;
+            clearInterval(pollTimer);
 
             if (data.success) {
-                showImportResult('success', '导入成功', data.message);
+                progressBar.style.width = '100%';
+                showResult('success', '导入完成，共 ' + data.total + ' 个用户。');
             } else {
                 var errs = data.errors ? data.errors.file || data.errors : ['导入失败'];
-                showImportResult('error', '导入失败', errs.join('<br>'));
+                showResult('error', errs.join('<br>'));
+
+                setTimeout(function() {
+                    overlay.style.display = 'none';
+                    startBtn.disabled = false;
+                    startBtn.textContent = '开始导入';
+                }, 3000);
             }
         })
         .catch(function() {
-            clearInterval(pollInterval);
-            if (resultShown) return;
+            finished = true;
+            clearInterval(pollTimer);
             overlay.style.display = 'none';
             startBtn.disabled = false;
             startBtn.textContent = '开始导入';
-            alert('导入失败，请重试。');
+            alert('导入请求失败，请重试。');
         });
     });
     </script>
