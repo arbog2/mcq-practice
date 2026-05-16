@@ -123,6 +123,8 @@ class UserController extends Controller
     {
         $this->authorizeAdminRoles();
 
+        set_time_limit(0);
+
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
         ]);
