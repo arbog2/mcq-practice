@@ -32,7 +32,7 @@ class UserController extends Controller
         $orgLevel2Id = $request->query('org_level2_id');
         $nameSearch = trim((string) $request->query('name', ''));
         $perPage = (int) $request->query('per_page', 10);
-        $perPage = in_array($perPage, [10, 20, 40, 50, 100]) ? $perPage : 10;
+        $perPage = in_array($perPage, [10, 20, 50, 80, 100]) ? $perPage : (int) config('practice.pagination.users', 20);
 
         $query = User::query()
             ->with('organizationUnit.parent')
@@ -64,7 +64,7 @@ class UserController extends Controller
         }
 
         if ($nameSearch !== '') {
-            $query->where('name', 'like', '%'.$nameSearch.'%');
+            $query->where('name', 'like', '%'.addcslashes($nameSearch, '%_').'%');
         }
 
         $users = $query->paginate($perPage)->withQueryString();
@@ -166,8 +166,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $this->authorizeAdminRoles();
-        $this->ensureCanModifyUser(auth()->user(), $user);
+        $this->authorize('update', $user);
 
         $assignableRoles = $this->assignableRolesFor(auth()->user());
         $leafOrganizationUnits = $this->leafOrganizationUnits();
@@ -183,8 +182,7 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
-        $this->authorizeAdminRoles();
-        $this->ensureCanModifyUser(auth()->user(), $user);
+        $this->authorize('update', $user);
         $this->ensureRoleAssignable(auth()->user(), $request->validated()['role']);
 
         $this->userService->updateUser($user, $request->validated());
@@ -196,10 +194,7 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
     public function destroy(User $user)
     {
-        $this->authorizeAdminRoles();
-        $this->ensureCanModifyUser(auth()->user(), $user);
-
-        abort_if($user->id === auth()->id(), 403);
+        $this->authorize('delete', $user);
 
         Log::record('删除用户', 'user', '删除用户：'.$user->username.' ('.$user->name.')');
 
@@ -291,31 +286,6 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
         if ($role === User::ROLE_ADMIN) {
             abort_unless($actor->isSuperAdmin(), 403);
-        }
-    }
-
-    private function ensureCanModifyUser(User $actor, User $target): void
-    {
-        if ($actor->id === $target->id) {
-            abort_unless($actor->isSuperAdmin(), 403, '不能编辑或删除自己。');
-
-            return;
-        }
-
-        if ($target->isSuperAdmin()) {
-            abort_unless($actor->isSuperAdmin(), 403);
-
-            return;
-        }
-
-        if ($target->isAdmin()) {
-            abort_unless($actor->isSuperAdmin(), 403);
-
-            return;
-        }
-
-        if ($actor->isAdmin() && $target->role !== User::ROLE_STUDENT) {
-            abort(403);
         }
     }
 

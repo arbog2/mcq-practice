@@ -155,9 +155,11 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $labels = ['A', 'B', 'C', 'D'];
+        if ($question->options()->exists()) {
+            return;
+        }
 
-        $question->options()->delete();
+        $labels = ['A', 'B', 'C', 'D'];
 
         foreach ($optionTexts as $index => $text) {
             QuestionOption::query()->create([

@@ -29,9 +29,6 @@ class OrganizationUnitController extends Controller
         ]);
 
         $parentId = $validated['parent_id'] ?? null;
-        if ($parentId === '' || $parentId === false) {
-            $parentId = null;
-        }
 
         if ($parentId) {
             $parent = OrganizationUnit::query()->findOrFail($parentId);

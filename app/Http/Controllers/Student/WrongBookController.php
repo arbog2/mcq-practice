@@ -83,6 +83,10 @@ class WrongBookController extends Controller
 
     public function startReview(Request $request)
     {
+        $validated = $request->validate([
+            'category_id' => ['nullable', 'exists:categories,id'],
+        ]);
+
         $count = max(1, (int) Setting::get('questions_per_session', config('practice.questions_per_session')));
         $userId = auth()->id();
 
@@ -90,8 +94,8 @@ class WrongBookController extends Controller
             ->whereNull('mastered_at')
             ->inRandomOrder();
 
-        if ($request->input('category_id')) {
-            $query->where('category_id', $request->input('category_id'));
+        if (! empty($validated['category_id'])) {
+            $query->where('category_id', $validated['category_id']);
         }
 
         $wrongs = $query->limit($count)->get();
@@ -102,7 +106,7 @@ class WrongBookController extends Controller
         }
 
         $questionIds = $wrongs->pluck('question_id');
-        $categoryId = $request->input('category_id') ?? $wrongs->first()->category_id;
+        $categoryId = $validated['category_id'] ?? $wrongs->first()->category_id;
 
         $attempt = $this->practiceService->startPracticeWithQuestions($categoryId, $userId, $questionIds);
 

@@ -17,12 +17,14 @@ class QuestionsImport implements ToCollection, WithHeadingRow
     {
         $errors = [];
         
+        $errors = [];
+
         DB::transaction(function () use ($rows, &$errors) {
             foreach ($rows as $index => $row) {
                 $rowNumber = $index + 2;
 
                 $r = $row instanceof Collection ? $row->toArray() : (array) $row;
-     
+
                 $stem = trim((string) ($r['stem'] ?? ''));
                 if ($stem === '') {
                     continue;
@@ -77,7 +79,14 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                     }
                 }
 
-                $isActive = $this->parseIsActive($r['is_active'] ?? null);
+                $isActive = $this->parseIsActive($r['is_active'] ?? null, $rowNumber, $errors);
+                if ($isActive === null) {
+                    continue;
+                }
+
+                if (! empty($errors)) {
+                    return;
+                }
 
                 $options = [$optionA, $optionB, $optionC, $optionD];
                 $labels = ['A', 'B', 'C', 'D'];
@@ -101,16 +110,16 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                         'updated_at' => now(),
                     ];
                 }
-                
+
                 QuestionOption::query()->insert($questionOptions);
             }
-        });
 
-        if (! empty($errors)) {
-            throw ValidationException::withMessages([
-                'file' => $errors,
-            ]);
-        }
+            if (! empty($errors)) {
+                throw ValidationException::withMessages([
+                    'file' => $errors,
+                ]);
+            }
+        });
     }
 
     private function parseCorrectIndex(string $raw): ?int
@@ -128,7 +137,7 @@ class QuestionsImport implements ToCollection, WithHeadingRow
         return null;
     }
 
-    private function parseIsActive(mixed $raw): bool
+    private function parseIsActive(mixed $raw, int $rowNumber, array &$errors): ?bool
     {
         if ($raw === null || $raw === '') {
             return true;
@@ -140,9 +149,16 @@ class QuestionsImport implements ToCollection, WithHeadingRow
 
         $s = strtolower(trim((string) $raw));
 
-        return match ($s) {
-            '0', 'false', 'no', 'n', '否', 'off' => false,
-            default => true,
-        };
+        if (in_array($s, ['1', 'true', 'y', 'yes', '是', 'on'], true)) {
+            return true;
+        }
+
+        if (in_array($s, ['0', 'false', 'n', 'no', '否', 'off'], true)) {
+            return false;
+        }
+
+        $errors[] = __('第 :row 行：is_active 值无效（应为 1/0、true/false、yes/no、是/否）。', ['row' => $rowNumber]);
+
+        return null;
     }
 }

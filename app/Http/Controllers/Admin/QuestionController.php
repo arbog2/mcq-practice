@@ -19,13 +19,13 @@ class QuestionController extends Controller
         $categoryId = $request->query('category_id');
         $keyword = $request->query('keyword');
         $perPage = (int) $request->query('per_page', config('practice.pagination.questions', 10));
-        $perPage = in_array($perPage, [10, 20, 40, 50, 100]) ? $perPage : 10;
+        $perPage = in_array($perPage, [10, 20, 50, 80, 100]) ? $perPage : (int) config('practice.pagination.questions', 10);
         $query = Question::query()->with('category')->orderByDesc('id');
         if ($categoryId) {
             $query->where('category_id', $categoryId);
         }
         if ($keyword) {
-            $query->where('stem', 'like', '%'.$keyword.'%');
+            $query->where('stem', 'like', '%'.addcslashes($keyword, '%_').'%');
         }
         $questions = $query->paginate($perPage)->withQueryString();
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();

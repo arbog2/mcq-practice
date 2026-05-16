@@ -41,6 +41,10 @@ class UserService
 
     public function approveUser(User $user): void
     {
+        if ($user->approval_status !== User::APPROVAL_PENDING) {
+            throw new \RuntimeException('只能审核待审批的用户。');
+        }
+
         $user->update([
             'approval_status' => User::APPROVAL_APPROVED,
             'approved_at' => now(),
@@ -50,6 +54,10 @@ class UserService
 
     public function rejectUser(User $user): void
     {
+        if ($user->approval_status !== User::APPROVAL_PENDING) {
+            throw new \RuntimeException('只能审核待审批的用户。');
+        }
+
         $user->update([
             'approval_status' => User::APPROVAL_REJECTED,
             'approved_at' => null,

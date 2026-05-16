@@ -30,7 +30,7 @@ class Log extends Model
     public static function record(string $action, string $type, ?string $description = null, ?array $payload = null): void
     {
         self::create([
-            'user_id' => auth()->id(),
+            'user_id' => auth()->check() ? auth()->id() : null,
             'action' => $action,
             'type' => $type,
             'description' => $description,

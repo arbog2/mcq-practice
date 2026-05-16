@@ -216,7 +216,7 @@ server {
 | `PRACTICE_QUESTIONS_PER_SESSION` | `10` | 每次练习题量（可在后台系统设置中修改） |
 | `REGISTRATION_ENABLED` | `true` | 是否开启自助注册 |
 | `REGISTRATION_REQUIRES_APPROVAL` | `false` | 注册是否需要审核 |
-| `PAGINATION_QUESTIONS` | `20` | 题库列表每页条数 |
+| `PAGINATION_QUESTIONS` | `10` | 题库列表每页条数（可选 10/20/50/80/100） |
 | `PAGINATION_USERS` | `20` | 用户列表每页条数 |
 | `PAGINATION_WRONG_QUESTIONS` | `20` | 错题本每页条数 |
 | `PAGINATION_ATTEMPTS` | `20` | 练习历史每页条数 |
