@@ -94,7 +94,12 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (finished) return;
-                if (data.total > 0) {
+                if (data.completed) {
+                    finished = true;
+                    clearInterval(pollTimer);
+                    progressBar.style.width = '100%';
+                    showResult('success', '导入完成，共 ' + data.total + ' 个用户。');
+                } else if (data.total > 0) {
                     var pct = Math.round(data.current / data.total * 100);
                     progressBar.style.width = pct + '%';
                     progressText.textContent = '已导入 ' + data.current + ' / ' + data.total + ' 条';
