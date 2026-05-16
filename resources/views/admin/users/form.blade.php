@@ -6,7 +6,7 @@
     <div class="stack">
         <label>用户名<input type="text" name="username" value="{{ $user->username ?? '' }}" required></label>
         <label>姓名<input type="text" name="name" value="{{ $user->name ?? '' }}" required></label>
-        <label>邮箱<input type="email" name="email" value="{{ $user->email ?? '' }}" required></label>
+        <label>邮箱<input type="email" name="email" value="{{ $user->email ?? '' }}"></label>
         
         @if(is_null($user))
         <label>密码<input type="password" name="password" required></label>

@@ -36,8 +36,8 @@ class UsersImport implements ToCollection, WithHeadingRow
                 $level1 = trim((string) ($r['level_1'] ?? ''));
                 $level2 = trim((string) ($r['level_2'] ?? ''));
 
-                if ($email === '' || $name === '') {
-                    $errors[] = __('第 :row 行：邮箱与姓名不能为空。', ['row' => $rowNumber]);
+                if ($name === '') {
+                    $errors[] = __('第 :row 行：姓名不能为空。', ['row' => $rowNumber]);
                     continue;
                 }
 
@@ -51,14 +51,16 @@ class UsersImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
-                $conflict = User::query()
-                    ->where('email', $email)
-                    ->where('username', '!=', $username)
-                    ->exists();
+                if ($email !== '') {
+                    $conflict = User::query()
+                        ->where('email', $email)
+                        ->where('username', '!=', $username)
+                        ->exists();
 
-                if ($conflict) {
-                    $errors[] = __('第 :row 行：邮箱已被其他用户使用。', ['row' => $rowNumber]);
-                    continue;
+                    if ($conflict) {
+                        $errors[] = __('第 :row 行：邮箱已被其他用户使用。', ['row' => $rowNumber]);
+                        continue;
+                    }
                 }
 
                 $organizationUnitId = null;
@@ -91,7 +93,7 @@ class UsersImport implements ToCollection, WithHeadingRow
 
                 $usersToInsert[] = [
                     'username' => $username,
-                    'email' => $email,
+                    'email' => $email ?: null,
                     'name' => $name,
                     'password' => Hash::make($passwordPlain),
                     'role' => User::ROLE_STUDENT,
