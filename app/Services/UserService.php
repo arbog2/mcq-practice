@@ -16,7 +16,7 @@ class UserService
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
             'managed_org_unit_ids' => $data['role'] === User::ROLE_ADMIN
-                ? ($data['managed_org_unit_ids'] ?? null)
+                ? array_map('intval', $data['managed_org_unit_ids'] ?? [])
                 : null,
             'approval_status' => User::APPROVAL_APPROVED,
             'approved_at' => now(),
@@ -35,8 +35,10 @@ class UserService
             'organization_unit_id' => $data['organization_unit_id'] ?? null,
         ]);
 
-        if ($user->role === User::ROLE_ADMIN && array_key_exists('managed_org_unit_ids', $data)) {
-            $user->managed_org_unit_ids = $data['managed_org_unit_ids'];
+        if ($user->role === User::ROLE_ADMIN) {
+            $user->managed_org_unit_ids = array_key_exists('managed_org_unit_ids', $data)
+                ? array_map('intval', $data['managed_org_unit_ids'])
+                : [];
         } elseif ($user->role !== User::ROLE_ADMIN) {
             $user->managed_org_unit_ids = null;
         }

@@ -109,7 +109,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return false;
         }
 
-        return is_array($this->managed_org_unit_ids);
+        return $this->managed_org_unit_ids === null || is_array($this->managed_org_unit_ids);
     }
 
     public function canManageUser(User $target): bool
@@ -126,13 +126,13 @@ class User extends Authenticatable implements MustVerifyEmail
             return false;
         }
 
-        $scope = $this->managed_org_unit_ids;
+        $scope = array_map('intval', $this->managed_org_unit_ids ?? []);
 
         if (empty($scope)) {
             return true;
         }
 
-        return in_array($target->organization_unit_id, $scope, true);
+        return in_array((int) $target->organization_unit_id, $scope, true);
     }
 
     public function getManagedOrgUnitIds(): array
