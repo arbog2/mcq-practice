@@ -135,5 +135,7 @@ class UsersImport implements ToCollection, WithHeadingRow
             $processed += count($chunk);
             Cache::put('import_progress_'.$userId, ['total' => $total, 'current' => $processed], 600);
         }
+
+        Cache::put('import_progress_'.$userId, ['total' => $total, 'current' => $processed, 'completed' => true], 600);
     }
 }

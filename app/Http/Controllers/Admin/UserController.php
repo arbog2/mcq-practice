@@ -133,6 +133,8 @@ class UserController extends Controller
             'file' => ['required', 'file', 'mimes:xlsx,xls,csv'],
         ]);
 
+        session_write_close();
+
         try {
             $import = new UsersImport;
             Excel::import($import, $request->file('file'));

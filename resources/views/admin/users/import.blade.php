@@ -66,13 +66,39 @@
     var startBtn = document.getElementById('start-btn');
     var fileInput = document.getElementById('file');
     var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    var importDone = false;
+    var resultShown = false;
 
     overlay.style.display = 'none';
+
+    function showImportResult(type, title, message) {
+        if (resultShown) return;
+        resultShown = true;
+        overlay.style.display = 'none';
+        startBtn.disabled = false;
+        startBtn.textContent = '开始导入';
+        resultTitle.textContent = title;
+        resultTitle.style.color = type === 'success' ? '#198754' : '#dc3545';
+        resultBody.innerHTML = '<p>' + message + '</p>';
+        if (type === 'success') {
+            resultBody.innerHTML += '<button class="btn btn-primary" onclick="closeResultModal();location.href=\'{{ route('admin.users.index') }}\'">查看用户列表</button>';
+        } else {
+            resultBody.innerHTML += '<button class="btn" onclick="closeResultModal()">关闭</button>';
+        }
+        resultModal.style.display = '';
+    }
+
+    function closeResultModal() {
+        resultModal.style.display = 'none';
+    }
 
     document.getElementById('import-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
         if (!fileInput.files.length) return;
+
+        importDone = false;
+        resultShown = false;
 
         startBtn.disabled = true;
         startBtn.textContent = '导入中...';
@@ -91,6 +117,12 @@
                     var pct = Math.round(data.current / data.total * 100);
                     progressBar.style.width = pct + '%';
                     progressText.textContent = '已导入 ' + data.current + ' / ' + data.total + ' 条';
+
+                    if (data.completed) {
+                        importDone = true;
+                        clearInterval(pollInterval);
+                        showImportResult('success', '导入成功', '共导入 ' + data.total + ' 个用户。');
+                    }
                 }
             });
         }, 1500);
@@ -107,12 +139,9 @@
             return res.json();
         })
         .then(function(data) {
-            overlay.style.display = 'none';
-            startBtn.disabled = false;
-            startBtn.textContent = '开始导入';
+            if (resultShown) return;
 
             if (data.success) {
-                progressBar.style.width = '100%';
                 showImportResult('success', '导入成功', data.message);
             } else {
                 var errs = data.errors ? data.errors.file || data.errors : ['导入失败'];
@@ -121,27 +150,12 @@
         })
         .catch(function() {
             clearInterval(pollInterval);
+            if (resultShown) return;
             overlay.style.display = 'none';
             startBtn.disabled = false;
             startBtn.textContent = '开始导入';
             alert('导入失败，请重试。');
         });
     });
-
-    function showImportResult(type, title, message) {
-        resultTitle.textContent = title;
-        resultTitle.style.color = type === 'success' ? '#198754' : '#dc3545';
-        resultBody.innerHTML = '<p>' + message + '</p>';
-        if (type === 'success') {
-            resultBody.innerHTML += '<button class="btn btn-primary" onclick="closeResultModal();location.href=\'{{ route('admin.users.index') }}\'">查看用户列表</button>';
-        } else {
-            resultBody.innerHTML += '<button class="btn" onclick="closeResultModal()">关闭</button>';
-        }
-        resultModal.style.display = '';
-    }
-
-    function closeResultModal() {
-        resultModal.style.display = 'none';
-    }
     </script>
 @endsection
