@@ -6,7 +6,7 @@
     <div class="card stack" style="max-width:720px;">
         <h1>编辑用户 #{{ $user->id }}</h1>
 
-        <form method="POST" action="{{ route('admin.users.update', ['student' => $user->id]) }}" class="stack">
+        <form method="POST" action="{{ url('admin/students/' . $user->id) }}" class="stack">
             @csrf
             @method('PUT')
 

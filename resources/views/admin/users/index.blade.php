@@ -96,7 +96,7 @@
                             <button class="btn" onclick="rejectUser({{ $user->id }})">拒绝</button>
                             @endif
                             @if(auth()->user()->canManageUser($user))
-                            <button class="btn" onclick="openAjaxModal('{{ route('admin.users.edit', ['student' => $user->id]) }}', '编辑学员')">编辑</button>
+                            <button class="btn" onclick="openAjaxModal('{{ url('admin/students/' . $user->id . '/edit') }}', '编辑学员')">编辑</button>
                             <button class="btn btn-danger" onclick="deleteUser({{ $user->id }})">删除</button>
                             @endif
                         </td>
