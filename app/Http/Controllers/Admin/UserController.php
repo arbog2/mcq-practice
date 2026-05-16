@@ -31,6 +31,8 @@ class UserController extends Controller
         $orgLevel1Id = $request->query('org_level1_id');
         $orgLevel2Id = $request->query('org_level2_id');
         $nameSearch = trim((string) $request->query('name', ''));
+        $perPage = (int) $request->query('per_page', 10);
+        $perPage = in_array($perPage, [10, 20, 40, 50, 100]) ? $perPage : 10;
 
         $query = User::query()
             ->with('organizationUnit.parent')
@@ -65,7 +67,7 @@ class UserController extends Controller
             $query->where('name', 'like', '%'.$nameSearch.'%');
         }
 
-        $users = $query->paginate(20)->withQueryString();
+        $users = $query->paginate($perPage)->withQueryString();
 
         $rootOrganizationUnits = OrganizationUnit::query()
             ->whereNull('parent_id')
@@ -81,7 +83,8 @@ class UserController extends Controller
             'rootOrganizationUnits',
             'orgLevel1Id',
             'orgLevel2Id',
-            'nameSearch'
+            'nameSearch',
+            'perPage'
         ));
     }
 
