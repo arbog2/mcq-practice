@@ -97,7 +97,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/students/batch-move', [AdminUserController::class, 'batchMoveCategory'])->name('users.batch-move');
     Route::post('/students/batch-destroy', [AdminUserController::class, 'batchDestroy'])->name('users.batch-destroy');
 
-    Route::resource('students', AdminUserController::class)->except(['show'])->names([
+    Route::resource('students', AdminUserController::class)->parameter('students', 'user')->except(['show'])->names([
         'index' => 'users.index',
         'create' => 'users.create',
         'store' => 'users.store',
