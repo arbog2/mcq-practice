@@ -161,7 +161,7 @@ class UserController extends Controller
 
         return view('admin.users.form', [
             'user' => $user,
-            'action' => route('admin.users.update', ['student' => $user]),
+            'action' => route('admin.users.update', ['student' => $user->id]),
             'method' => 'PUT',
             'assignableRoles' => $assignableRoles,
             'leafOrganizationUnits' => $leafOrganizationUnits,
