@@ -12,6 +12,7 @@ use App\Models\OrganizationUnit;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -130,14 +131,24 @@ class UserController extends Controller
         ]);
 
         try {
-            Excel::import(new UsersImport, $request->file('file'));
+            $import = new UsersImport;
+            Excel::import($import, $request->file('file'));
 
             Log::record('导入用户', 'user', '通过 Excel 导入用户');
-        } catch (ValidationException $e) {
-            return redirect()->back()->withErrors($e->errors());
-        }
 
-        return redirect()->route('admin.users.index')->with('status', __('导入完成。'));
+            return response()->json(['success' => true, 'message' => '导入完成。']);
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+        }
+    }
+
+    public function importProgress()
+    {
+        $this->authorizeAdminRoles();
+
+        $progress = Cache::get('import_progress_'.auth()->id());
+
+        return response()->json($progress ?? ['total' => 0, 'current' => 0]);
     }
 
     public function importTemplate()
@@ -194,6 +205,24 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
         return redirect()->route('admin.users.index')->with('status', __('用户已删除。'));
     }
 
+    public function approve(User $user)
+    {
+        abort_unless($user->role === User::ROLE_STUDENT, 404);
+
+        $this->userService->approveUser($user);
+
+        return redirect()->back()->with('status', __('已通过审核。'));
+    }
+
+    public function reject(User $user)
+    {
+        abort_unless($user->role === User::ROLE_STUDENT, 404);
+
+        $this->userService->rejectUser($user);
+
+        return redirect()->back()->with('status', __('已拒绝该账号。'));
+    }
+
     public function batchDestroy(Request $request)
     {
         $this->authorizeAdminRoles();
@@ -238,24 +267,6 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
         Log::record('批量转移用户', 'user', "批量转移 {$count} 个用户到分类 {$validated['organization_unit_id']}");
 
         return response()->json(['message' => "已批量转移 {$count} 个用户。", 'reload' => true]);
-    }
-
-    public function approve(User $user)
-    {
-        abort_unless($user->role === User::ROLE_STUDENT, 404);
-
-        $this->userService->approveUser($user);
-
-        return redirect()->back()->with('status', __('已通过审核。'));
-    }
-
-    public function reject(User $user)
-    {
-        abort_unless($user->role === User::ROLE_STUDENT, 404);
-
-        $this->userService->rejectUser($user);
-
-        return redirect()->back()->with('status', __('已拒绝该账号。'));
     }
 
     private function authorizeAdminRoles(): void

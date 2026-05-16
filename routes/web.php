@@ -84,6 +84,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users-import/template', [AdminUserController::class, 'importTemplate'])->name('users.import.template');
     Route::get('/users-import', [AdminUserController::class, 'importForm'])->name('users.import');
     Route::post('/users-import', [AdminUserController::class, 'importStore'])->name('users.import.store');
+    Route::get('/import-progress', [AdminUserController::class, 'importProgress'])->name('import.progress');
 
     Route::post('/users/batch-move', [AdminUserController::class, 'batchMoveCategory'])->name('users.batch-move');
     Route::post('/users/batch-destroy', [AdminUserController::class, 'batchDestroy'])->name('users.batch-destroy');
