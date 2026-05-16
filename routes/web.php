@@ -85,6 +85,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/users-import', [AdminUserController::class, 'importForm'])->name('users.import');
     Route::post('/users-import', [AdminUserController::class, 'importStore'])->name('users.import.store');
 
+    Route::post('/users/batch-move', [AdminUserController::class, 'batchMoveCategory'])->name('users.batch-move');
+    Route::post('/users/batch-destroy', [AdminUserController::class, 'batchDestroy'])->name('users.batch-destroy');
+
     Route::resource('users', AdminUserController::class)->except(['show']);
     Route::post('/users/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
     Route::post('/users/{user}/reject', [AdminUserController::class, 'reject'])->name('users.reject');

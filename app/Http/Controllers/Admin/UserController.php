@@ -192,6 +192,52 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
         return redirect()->route('admin.users.index')->with('status', __('用户已删除。'));
     }
 
+    public function batchDestroy(Request $request)
+    {
+        $this->authorizeAdminRoles();
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:users,id'],
+        ]);
+
+        $actor = auth()->user();
+        $ids = $validated['ids'];
+
+        $query = User::whereIn('id', $ids);
+        $this->filterUsersForActor($actor, $query);
+
+        $count = $query->count();
+        $query->delete();
+
+        Log::record('批量删除用户', 'user', "批量删除 {$count} 个用户");
+
+        return response()->json(['message' => "已批量删除 {$count} 个用户。", 'reload' => true]);
+    }
+
+    public function batchMoveCategory(Request $request)
+    {
+        $this->authorizeAdminRoles();
+
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:users,id'],
+            'organization_unit_id' => ['nullable', 'exists:organization_units,id'],
+        ]);
+
+        $actor = auth()->user();
+        $ids = $validated['ids'];
+
+        $query = User::whereIn('id', $ids);
+        $this->filterUsersForActor($actor, $query);
+
+        $count = $query->update(['organization_unit_id' => $validated['organization_unit_id'] ?: null]);
+
+        Log::record('批量转移用户', 'user', "批量转移 {$count} 个用户到分类 {$validated['organization_unit_id']}");
+
+        return response()->json(['message' => "已批量转移 {$count} 个用户。", 'reload' => true]);
+    }
+
     public function approve(User $user)
     {
         abort_unless($user->role === User::ROLE_STUDENT, 404);
@@ -282,5 +328,14 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
+    }
+
+    private function filterUsersForActor(User $actor, \Illuminate\Database\Eloquent\Builder $query): void
+    {
+        if ($actor->isSuperAdmin()) {
+            $query->where('id', '!=', $actor->id);
+        } else {
+            $query->where('role', User::ROLE_STUDENT);
+        }
     }
 }

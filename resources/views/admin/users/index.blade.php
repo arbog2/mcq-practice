@@ -48,10 +48,30 @@
             </form>
         </div>
 
+        <div id="batch-bar" class="card row" style="display:none;justify-content:space-between;align-items:center;">
+            <span class="muted" id="batch-count">已选择 0 项</span>
+            <div class="row" style="gap:10px;align-items:center;">
+                <label class="row" style="gap:10px;align-items:center;">
+                    <span class="muted">批量转移到</span>
+                    <select id="batch-org-unit" style="width:auto;">
+                        <option value="">未分类</option>
+                        @foreach($rootOrganizationUnits as $root)
+                        @foreach($root->children as $child)
+                        <option value="{{ $child->id }}">{{ $root->name }}{{ $child->name }}</option>
+                        @endforeach
+                        @endforeach
+                    </select>
+                    <button class="btn btn-primary" id="batch-move-btn" disabled>转移</button>
+                </label>
+                <button class="btn btn-danger" id="batch-delete-btn" disabled>删除</button>
+            </div>
+        </div>
+
         <div class="card">
             <table>
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="select-all"></th>
                         <th>用户名</th>
                         <th>姓名</th>
                         <th>邮箱</th>
@@ -64,6 +84,7 @@
                 <tbody>
                     @foreach($users as $user)
                     <tr>
+                        <td><input type="checkbox" class="user-checkbox" value="{{ $user->id }}"></td>
                         <td>{{ $user->username }}</td>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
@@ -97,4 +118,77 @@
             <div class="modal-body" id="ajax-modal-body"></div>
         </div>
     </div>
+
+    <script>
+    (function() {
+        var selectAll = document.getElementById('select-all');
+        var checkboxes = document.querySelectorAll('.user-checkbox');
+        var batchBar = document.getElementById('batch-bar');
+        var batchCount = document.getElementById('batch-count');
+        var batchOrgUnit = document.getElementById('batch-org-unit');
+        var batchMoveBtn = document.getElementById('batch-move-btn');
+        var batchDeleteBtn = document.getElementById('batch-delete-btn');
+        var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        function getCheckedIds() {
+            var ids = [];
+            document.querySelectorAll('.user-checkbox:checked').forEach(function(cb) { ids.push(cb.value); });
+            return ids;
+        }
+
+        function updateBatchBar() {
+            var ids = getCheckedIds();
+            var count = ids.length;
+            if (count > 0) {
+                batchBar.style.display = '';
+                batchCount.textContent = '已选择 ' + count + ' 项';
+            } else {
+                batchBar.style.display = 'none';
+            }
+            batchMoveBtn.disabled = count === 0;
+            batchDeleteBtn.disabled = count === 0;
+        }
+
+        function postJson(url, body) {
+            return fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function(res) { return res.json(); });
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                checkboxes.forEach(function(cb) { cb.checked = selectAll.checked; });
+                updateBatchBar();
+            });
+        }
+        checkboxes.forEach(function(cb) {
+            cb.addEventListener('change', updateBatchBar);
+        });
+
+        batchMoveBtn.addEventListener('click', function() {
+            var ids = getCheckedIds();
+            var orgId = batchOrgUnit.value;
+            if (ids.length === 0) return;
+            if (!confirm('确认将 ' + ids.length + ' 个用户转移到所选分类？')) return;
+            batchMoveBtn.disabled = true;
+            batchMoveBtn.textContent = '转移中...';
+            postJson('{{ route('admin.users.batch-move') }}', { ids: ids, organization_unit_id: orgId })
+                .then(function(data) { location.reload(); })
+                .catch(function() { alert('转移失败'); location.reload(); });
+        });
+
+        batchDeleteBtn.addEventListener('click', function() {
+            var ids = getCheckedIds();
+            if (ids.length === 0) return;
+            if (!confirm('确认删除选中的 ' + ids.length + ' 个用户？此操作不可撤销。')) return;
+            batchDeleteBtn.disabled = true;
+            batchDeleteBtn.textContent = '删除中...';
+            postJson('{{ route('admin.users.batch-destroy') }}', { ids: ids })
+                .then(function(data) { location.reload(); })
+                .catch(function() { alert('删除失败'); location.reload(); });
+        });
+    })();
+    </script>
 @endsection

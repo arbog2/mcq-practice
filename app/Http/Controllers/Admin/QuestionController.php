@@ -19,7 +19,7 @@ class QuestionController extends Controller
         $categoryId = $request->query('category_id');
         $keyword = $request->query('keyword');
         $perPage = (int) $request->query('per_page', config('practice.pagination.questions', 20));
-        $perPage = in_array($perPage, [20, 40, 80, 100]) ? $perPage : 20;
+        $perPage = in_array($perPage, [10, 20, 40, 80, 100]) ? $perPage : 20;
         $query = Question::query()->with('category')->orderByDesc('id');
         if ($categoryId) {
             $query->where('category_id', $categoryId);
