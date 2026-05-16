@@ -141,6 +141,15 @@ class UsersImport implements ToCollection, WithHeadingRow
                 $organizationUnitId = $child->id;
             }
 
+            $actor = auth()->user();
+            if ($actor && ! $actor->isSuperAdmin()) {
+                $scope = $actor->getManagedOrgUnitIds();
+                if (! empty($scope) && $organizationUnitId !== null && ! in_array($organizationUnitId, $scope, true)) {
+                    $errors[] = __('第 :row 行：学员分类超出您的管理范围，无权导入。', ['row' => $rowNumber]);
+                    continue;
+                }
+            }
+
             $usersData[] = [
                 'username' => $username,
                 'email' => $email ?: null,

@@ -10,6 +10,8 @@ class OrganizationUnitController extends Controller
 {
     public function index()
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         $roots = OrganizationUnit::query()
             ->whereNull('parent_id')
             ->with('children')
@@ -22,6 +24,8 @@ class OrganizationUnitController extends Controller
 
     public function store(Request $request)
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         $validated = $request->validate([
             'parent_id' => ['nullable', 'exists:organization_units,id'],
             'name' => ['required', 'string', 'max:255'],
@@ -46,6 +50,8 @@ class OrganizationUnitController extends Controller
 
     public function destroy(OrganizationUnit $organizationUnit)
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         if ($organizationUnit->children()->exists()) {
             return redirect()->back()->withErrors(['delete' => __('请先删除其下属二级分类。')]);
         }

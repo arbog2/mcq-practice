@@ -5,7 +5,7 @@
 @section('content')
     <div class="card stack">
         <h1>后台</h1>
-        <p class="muted">从这里管理分类、题库、用户与用户分类，并查看错题统计。题目插图需确保已执行 <code>php artisan storage:link</code>。</p>
+        <p class="muted">从这里管理分类、题库、学员与学员分类，并查看错题统计。题目插图需确保已执行 <code>php artisan storage:link</code>。</p>
 
         <div class="stack">
             <div class="card stack">
@@ -13,10 +13,15 @@
                 <div class="row">
                     <a class="btn btn-primary" href="{{ route('admin.categories.index') }}">分类管理</a>
                     <a class="btn btn-primary" href="{{ route('admin.questions.index') }}">题库管理</a>
-                    <a class="btn btn-primary" href="{{ route('admin.users.index') }}">用户管理</a>
-                    <a class="btn btn-primary" href="{{ route('admin.users.import') }}">用户 Excel 导入</a>
-                    <a class="btn btn-primary" href="{{ route('admin.organization-units.index') }}">用户分类</a>
+                    <a class="btn btn-primary" href="{{ route('admin.users.index') }}">学员管理</a>
+                    <a class="btn btn-primary" href="{{ route('admin.users.import') }}">学员 Excel 导入</a>
+                    @if(auth()->user()?->isSuperAdmin())
+                        <a class="btn btn-primary" href="{{ route('admin.organization-units.index') }}">学员分类</a>
+                    @endif
                     <a class="btn btn-primary" href="{{ route('admin.stats.wrong-by-category') }}">错题统计</a>
+                    @if(auth()->user()?->isSuperAdmin())
+                        <a class="btn btn-primary" href="{{ route('admin.admins.index') }}">管理员管理</a>
+                    @endif
                     <a class="btn btn-primary" href="{{ route('admin.settings.index') }}">系统设置</a>
                 </div>
             </div>

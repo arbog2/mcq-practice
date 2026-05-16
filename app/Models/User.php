@@ -20,6 +20,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public const ROLE_STUDENT = 'student';
 
+    public const ROLE_LABELS = [
+        self::ROLE_SUPER_ADMIN => '超级管理员',
+        self::ROLE_ADMIN => '管理员',
+        self::ROLE_STUDENT => '学员',
+    ];
+
     public const APPROVAL_PENDING = 'pending';
 
     public const APPROVAL_APPROVED = 'approved';
@@ -32,6 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'role',
+        'managed_org_unit_ids',
         'approval_status',
         'approved_at',
         'approved_by',
@@ -49,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'approved_at' => 'datetime',
+            'managed_org_unit_ids' => 'array',
         ];
     }
 
@@ -89,5 +97,50 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $this->approval_status === self::APPROVAL_APPROVED;
+    }
+
+    public function canManageUsers(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($this->role !== self::ROLE_ADMIN) {
+            return false;
+        }
+
+        return is_array($this->managed_org_unit_ids);
+    }
+
+    public function canManageUser(User $target): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $this->canManageUsers()) {
+            return false;
+        }
+
+        if ($target->role !== self::ROLE_STUDENT) {
+            return false;
+        }
+
+        $scope = $this->managed_org_unit_ids;
+
+        if (empty($scope)) {
+            return true;
+        }
+
+        return in_array($target->organization_unit_id, $scope, true);
+    }
+
+    public function getManagedOrgUnitIds(): array
+    {
+        if ($this->isSuperAdmin()) {
+            return [];
+        }
+
+        return is_array($this->managed_org_unit_ids) ? $this->managed_org_unit_ids : [];
     }
 }

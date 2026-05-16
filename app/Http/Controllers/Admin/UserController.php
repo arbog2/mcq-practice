@@ -13,8 +13,7 @@ use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -26,7 +25,8 @@ class UserController extends Controller
 
     public function index(Request $request)
     {
-        $role = $request->query('role');
+        Gate::authorize('viewAny', User::class);
+
         $approvalStatus = $request->query('approval_status');
         $orgLevel1Id = $request->query('org_level1_id');
         $orgLevel2Id = $request->query('org_level2_id');
@@ -36,21 +36,16 @@ class UserController extends Controller
 
         $query = User::query()
             ->with('organizationUnit.parent')
+            ->where('role', User::ROLE_STUDENT)
             ->orderByDesc('id');
 
         /** @var User $actor */
         $actor = auth()->user();
-        if ($actor && $actor->role === User::ROLE_ADMIN) {
-            $query->where('role', '!=', User::ROLE_SUPER_ADMIN);
-        }
 
-        if ($role) {
-            $query->where('role', $role);
-        }
+        $this->scopeQueryForActor($actor, $query);
 
         if ($approvalStatus) {
-            $query->where('approval_status', $approvalStatus)
-                ->where('role', User::ROLE_STUDENT);
+            $query->where('approval_status', $approvalStatus);
         }
 
         if ($orgLevel2Id !== null && $orgLevel2Id !== '') {
@@ -69,16 +64,10 @@ class UserController extends Controller
 
         $users = $query->paginate($perPage)->withQueryString();
 
-        $rootOrganizationUnits = OrganizationUnit::query()
-            ->whereNull('parent_id')
-            ->with(['children' => fn ($q) => $q->orderBy('sort_order')->orderBy('name')])
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+        $rootOrganizationUnits = $this->rootOrganizationUnits();
 
         return view('admin.users.index', compact(
             'users',
-            'role',
             'approvalStatus',
             'rootOrganizationUnits',
             'orgLevel1Id',
@@ -90,9 +79,9 @@ class UserController extends Controller
 
     public function create()
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('create', User::class);
 
-        $assignableRoles = $this->assignableRolesFor(auth()->user());
+        $assignableRoles = [User::ROLE_STUDENT];
         $leafOrganizationUnits = $this->leafOrganizationUnits();
 
         return view('admin.users.form', [
@@ -106,26 +95,25 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
-        $this->authorizeAdminRoles();
-        $this->ensureRoleAssignable(auth()->user(), $request->validated()['role']);
+        Gate::authorize('create', User::class);
 
         $user = $this->userService->createUser($request->validated(), auth()->id());
 
-        Log::record('创建用户', 'user', '创建用户：'.$user->username, $request->validated());
+        Log::record('创建学员', 'user', '创建学员：'.$user->username, $request->validated());
 
-        return response()->json(['message' => '用户已创建。', 'reload' => true]);
+        return response()->json(['message' => '学员已创建。', 'reload' => true]);
     }
 
     public function importForm()
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('create', User::class);
 
         return view('admin.users.import');
     }
 
     public function importStore(Request $request)
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('create', User::class);
 
         set_time_limit(0);
 
@@ -140,7 +128,7 @@ class UserController extends Controller
             Excel::import($import, $request->file('file'));
 
             $progress = Cache::get('import_progress_'.auth()->id(), ['total' => 0]);
-            Log::record('导入用户', 'user', '通过 Excel 导入用户');
+            Log::record('导入学员', 'user', '通过 Excel 导入学员');
 
             return response()->json(['success' => true, 'message' => '导入完成。', 'total' => $progress['total']]);
         } catch (ValidationException $e) {
@@ -150,7 +138,7 @@ class UserController extends Controller
 
     public function importProgress()
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('create', User::class);
 
         $progress = Cache::get('import_progress_'.auth()->id());
 
@@ -159,16 +147,16 @@ class UserController extends Controller
 
     public function importTemplate()
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('create', User::class);
 
-        return Excel::download(new UsersImportTemplateExport, 'users-import-template.xlsx');
+        return Excel::download(new UsersImportTemplateExport, 'students-import-template.xlsx');
     }
 
     public function edit(User $user)
     {
-        $this->authorize('update', $user);
+        abort_unless(auth()->user()->canManageUser($user), 403);
 
-        $assignableRoles = $this->assignableRolesFor(auth()->user());
+        $assignableRoles = [User::ROLE_STUDENT];
         $leafOrganizationUnits = $this->leafOrganizationUnits();
 
         return view('admin.users.form', [
@@ -182,33 +170,32 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
-        $this->authorize('update', $user);
-        $this->ensureRoleAssignable(auth()->user(), $request->validated()['role']);
+        abort_unless(auth()->user()->canManageUser($user), 403);
 
         $this->userService->updateUser($user, $request->validated());
 
-        Log::record('编辑用户', 'user', '编辑用户：'.$user->username, ['user_id' => $user->id] + $request->validated());
+        Log::record('编辑学员', 'user', '编辑学员：'.$user->username, ['user_id' => $user->id] + $request->validated());
 
-return response()->json(['message' => '用户已更新。', 'reload' => true]);
+        return response()->json(['message' => '学员已更新。', 'reload' => true]);
     }
 
     public function destroy(User $user)
     {
-        $this->authorize('delete', $user);
+        abort_unless(auth()->user()->canManageUser($user), 403);
 
-        Log::record('删除用户', 'user', '删除用户：'.$user->username.' ('.$user->name.')');
+        Log::record('删除学员', 'user', '删除学员：'.$user->username.' ('.$user->name.')');
 
         $user->delete();
 
         if (request()->ajax()) {
-            return response()->json(['message' => '用户已删除。', 'reload' => true]);
+            return response()->json(['message' => '学员已删除。', 'reload' => true]);
         }
-        return redirect()->route('admin.users.index')->with('status', __('用户已删除。'));
+        return redirect()->route('admin.users.index')->with('status', __('学员已删除。'));
     }
 
     public function approve(User $user)
     {
-        abort_unless($user->role === User::ROLE_STUDENT, 404);
+        abort_unless(auth()->user()->canManageUser($user), 403);
 
         $this->userService->approveUser($user);
 
@@ -217,7 +204,7 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
     public function reject(User $user)
     {
-        abort_unless($user->role === User::ROLE_STUDENT, 404);
+        abort_unless(auth()->user()->canManageUser($user), 403);
 
         $this->userService->rejectUser($user);
 
@@ -226,7 +213,7 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
     public function batchDestroy(Request $request)
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('viewAny', User::class);
 
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -236,20 +223,20 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
         $actor = auth()->user();
         $ids = $validated['ids'];
 
-        $query = User::whereIn('id', $ids);
-        $this->filterUsersForActor($actor, $query);
+        $query = User::whereIn('id', $ids)->where('role', User::ROLE_STUDENT);
+        $this->scopeQueryForActor($actor, $query);
 
         $count = $query->count();
         $query->delete();
 
-        Log::record('批量删除用户', 'user', "批量删除 {$count} 个用户");
+        Log::record('批量删除学员', 'user', "批量删除 {$count} 个学员");
 
-        return response()->json(['message' => "已批量删除 {$count} 个用户。", 'reload' => true]);
+        return response()->json(['message' => "已批量删除 {$count} 个学员。", 'reload' => true]);
     }
 
     public function batchMoveCategory(Request $request)
     {
-        $this->authorizeAdminRoles();
+        Gate::authorize('viewAny', User::class);
 
         $validated = $request->validate([
             'ids' => ['required', 'array'],
@@ -259,72 +246,100 @@ return response()->json(['message' => '用户已更新。', 'reload' => true]);
 
         $actor = auth()->user();
         $ids = $validated['ids'];
+        $targetOrgId = $validated['organization_unit_id'] ?: null;
 
-        $query = User::whereIn('id', $ids);
-        $this->filterUsersForActor($actor, $query);
-
-        $count = $query->update(['organization_unit_id' => $validated['organization_unit_id'] ?: null]);
-
-        Log::record('批量转移用户', 'user', "批量转移 {$count} 个用户到分类 {$validated['organization_unit_id']}");
-
-        return response()->json(['message' => "已批量转移 {$count} 个用户。", 'reload' => true]);
-    }
-
-    private function authorizeAdminRoles(): void
-    {
-        /** @var User $actor */
-        $actor = auth()->user();
-
-        abort_unless($actor && $actor->isAdmin(), 403);
-    }
-
-    private function ensureRoleAssignable(User $actor, string $role): void
-    {
-        if ($role === User::ROLE_SUPER_ADMIN) {
-            abort_unless($actor->isSuperAdmin(), 403);
+        if ($targetOrgId && ! $actor->isSuperAdmin()) {
+            $scope = $actor->getManagedOrgUnitIds();
+            if (! empty($scope) && ! in_array((int) $targetOrgId, $scope, true)) {
+                abort(403, '目标分类超出您的管理范围。');
+            }
         }
 
-        if ($role === User::ROLE_ADMIN) {
-            abort_unless($actor->isSuperAdmin(), 403);
-        }
+        $query = User::whereIn('id', $ids)->where('role', User::ROLE_STUDENT);
+        $this->scopeQueryForActor($actor, $query);
+
+        $count = $query->update(['organization_unit_id' => $targetOrgId]);
+
+        Log::record('批量转移学员', 'user', "批量转移 {$count} 个学员到分类 {$validated['organization_unit_id']}");
+
+        return response()->json(['message' => "已批量转移 {$count} 个学员。", 'reload' => true]);
     }
 
-    /**
-     * @return list<string>
-     */
-    private function assignableRolesFor(User $actor): array
-    {
-        if ($actor->isSuperAdmin()) {
-            return [User::ROLE_STUDENT, User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN];
-        }
-
-        if ($actor->role === User::ROLE_ADMIN) {
-            return [User::ROLE_STUDENT];
-        }
-
-        return [];
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, OrganizationUnit>
-     */
     private function leafOrganizationUnits()
     {
-        return OrganizationUnit::query()
+        $query = OrganizationUnit::query()
             ->whereNotNull('parent_id')
             ->with('parent')
             ->orderBy('parent_id')
             ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+
+        $this->scopeOrgUnitsForActor(auth()->user(), $query);
+
+        return $query->get();
     }
 
-    private function filterUsersForActor(User $actor, \Illuminate\Database\Eloquent\Builder $query): void
+    private function rootOrganizationUnits()
+    {
+        $roots = OrganizationUnit::query()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($q) => $q->orderBy('sort_order')->orderBy('name')])
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $actor = auth()->user();
+        if (! $actor || $actor->isSuperAdmin()) {
+            return $roots;
+        }
+
+        $scope = $actor->getManagedOrgUnitIds();
+        if (empty($scope)) {
+            return $roots;
+        }
+
+        $childrenToKeep = OrganizationUnit::whereIn('id', $scope)
+            ->whereNotNull('parent_id')
+            ->get()
+            ->keyBy('id');
+
+        $allowedParentIds = $childrenToKeep->pluck('parent_id')->unique();
+
+        foreach ($roots as $root) {
+            if (! $allowedParentIds->contains($root->id)) {
+                $root->children = collect();
+            } else {
+                $root->children = $root->children
+                    ->filter(fn ($child) => $childrenToKeep->has($child->id))
+                    ->values();
+            }
+        }
+
+        return $roots->filter(fn ($root) => $root->children->isNotEmpty())->values();
+    }
+
+    private function scopeOrgUnitsForActor(User $actor, $query): void
+    {
+        if ($actor->isSuperAdmin()) {
+            return;
+        }
+
+        $scope = $actor->getManagedOrgUnitIds();
+        if (! empty($scope)) {
+            $query->whereIn('id', $scope);
+        }
+    }
+
+    private function scopeQueryForActor(User $actor, \Illuminate\Database\Eloquent\Builder $query): void
     {
         if ($actor->isSuperAdmin()) {
             $query->where('id', '!=', $actor->id);
-        } else {
-            $query->where('role', User::ROLE_STUDENT);
+            return;
+        }
+
+        $scope = $actor->getManagedOrgUnitIds();
+        if (! empty($scope)) {
+            $query->whereIn('organization_unit_id', $scope);
         }
     }
 }

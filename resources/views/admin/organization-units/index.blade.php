@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', '用户分类（二级）')
+@section('title', '学员分类（二级）')
 
 @section('content')
     <div class="stack">
         <div class="card stack">
-            <h1>用户分类（二级）</h1>
+            <h1>学员分类（二级）</h1>
             <p class="muted">一级示例：<strong>高二</strong>；二级示例：<strong>三班</strong>（归属在某一级下）。用户绑定到<strong>二级</strong>。</p>
         </div>
 

@@ -173,12 +173,19 @@
                         <a href="{{ route('admin.dashboard') }}">后台</a>
                         <a href="{{ route('admin.categories.index') }}">分类</a>
                         <a href="{{ route('admin.questions.index') }}">题库</a>
-                        <a href="{{ route('admin.users.index') }}">用户</a>
-                        <a href="{{ route('admin.organization-units.index') }}">用户分类</a>
+                        @if(auth()->user()->canManageUsers())
+                            <a href="{{ route('admin.users.index') }}">学员</a>
+                        @endif
+                        @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('admin.organization-units.index') }}">学员分类</a>
+                        @endif
                         <a href="{{ route('admin.stats.wrong-by-category') }}">错题统计</a>
                         @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('admin.admins.index') }}">管理员</a>
                             <a href="{{ route('admin.logs.index') }}">操作日志</a>
+                            <a href="{{ route('admin.settings.index') }}">系统设置</a>
                         @endif
+                        <a href="{{ route('admin.profile.edit') }}">我的资料</a>
                     @else
                         <a href="{{ route('student.dashboard') }}">学员首页</a>
                         <a href="{{ route('student.categories') }}">开始练习</a>
@@ -233,7 +240,7 @@ function closeAjaxModal() {
 
 function deleteCategory(id) { deleteItem('/admin/categories/', id); }
 function deleteQuestion(id) { deleteItem('/admin/questions/', id); }
-function deleteUser(id) { deleteItem('/admin/users/', id); }
+function deleteUser(id) { deleteItem('/admin/students/', id); }
 
 function deleteItem(url, id) {
     if (!confirm('确认删除？')) return;
@@ -247,7 +254,7 @@ function deleteItem(url, id) {
 
 function approveUser(id) {
     var csrf = document.querySelector('meta[name="csrf-token"]').content;
-    fetch('/admin/users/' + id + '/approve', {
+    fetch('/admin/students/' + id + '/approve', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': csrf }
     }).then(function() { location.reload(); });
@@ -255,7 +262,7 @@ function approveUser(id) {
 
 function rejectUser(id) {
     var csrf = document.querySelector('meta[name="csrf-token"]').content;
-    fetch('/admin/users/' + id + '/reject', {
+    fetch('/admin/students/' + id + '/reject', {
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': csrf }
     }).then(function() { location.reload(); });

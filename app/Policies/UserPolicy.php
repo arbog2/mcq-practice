@@ -8,17 +8,29 @@ class UserPolicy
 {
     public function viewAny(User $actor): bool
     {
-        return $actor->isAdmin();
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        return $actor->canManageUsers();
     }
 
     public function view(User $actor, User $user): bool
     {
-        return $this->canModifyUser($actor, $user);
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        return $actor->canManageUser($user);
     }
 
     public function create(User $actor): bool
     {
-        return $actor->isAdmin();
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        return $actor->canManageUsers();
     }
 
     public function update(User $actor, User $user): bool
@@ -27,34 +39,41 @@ class UserPolicy
             return $actor->isSuperAdmin();
         }
 
-        return $this->canModifyUser($actor, $user);
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        return $actor->canManageUser($user);
     }
 
     public function delete(User $actor, User $user): bool
     {
-        return $actor->id !== $user->id && $this->canModifyUser($actor, $user);
+        if ($actor->id === $user->id) {
+            return false;
+        }
+
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        return $actor->canManageUser($user);
     }
 
     public function approve(User $actor, User $user): bool
     {
-        return $user->role === User::ROLE_STUDENT && $actor->isAdmin();
+        if ($user->role !== User::ROLE_STUDENT) {
+            return false;
+        }
+
+        if ($actor->isSuperAdmin()) {
+            return true;
+        }
+
+        return $actor->canManageUser($user);
     }
 
     public function reject(User $actor, User $user): bool
     {
         return $this->approve($actor, $user);
-    }
-
-    private function canModifyUser(User $actor, User $target): bool
-    {
-        if ($target->isSuperAdmin()) {
-            return $actor->isSuperAdmin();
-        }
-
-        if ($target->role === User::ROLE_ADMIN) {
-            return $actor->isSuperAdmin();
-        }
-
-        return $actor->isAdmin();
     }
 }

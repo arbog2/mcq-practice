@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '批量导入用户')
+@section('title', '批量导入学员')
 
 @section('content')
     <div class="card stack" style="max-width:920px;">
@@ -30,7 +30,7 @@
 
             <div class="row">
                 <button class="btn btn-primary" type="submit" id="start-btn">开始导入</button>
-                <a class="muted" href="{{ route('admin.users.index') }}">返回用户列表</a>
+                <a class="muted" href="{{ route('admin.users.index') }}">返回学员列表</a>
             </div>
         </form>
     </div>
@@ -98,7 +98,7 @@
                     finished = true;
                     clearInterval(pollTimer);
                     progressBar.style.width = '100%';
-                    showResult('success', '导入完成，共 ' + data.total + ' 个用户。');
+                    showResult('success', '导入完成，共 ' + data.total + ' 个学员。');
                 } else if (data.total > 0) {
                     var pct = Math.round(data.current / data.total * 100);
                     progressBar.style.width = pct + '%';
@@ -121,7 +121,7 @@
 
             if (data.success) {
                 progressBar.style.width = '100%';
-                showResult('success', '导入完成，共 ' + data.total + ' 个用户。');
+                showResult('success', '导入完成，共 ' + data.total + ' 个学员。');
             } else {
                 var errs = data.errors ? data.errors.file || data.errors : ['导入失败'];
                 showResult('error', errs.join('<br>'));
