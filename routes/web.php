@@ -118,6 +118,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/organization-units/{organization_unit}', [AdminOrganizationUnitController::class, 'destroy'])->name('organization-units.destroy');
 
     Route::resource('categories', AdminCategoryController::class)->except(['show']);
+    Route::post('/categories/{category}/toggle-active', [AdminCategoryController::class, 'toggleActive'])->name('categories.toggle-active');
 
     Route::get('/questions-import/template', [AdminQuestionController::class, 'importTemplate'])->name('questions.import.template');
     Route::get('/questions-import', [AdminQuestionController::class, 'importForm'])->name('questions.import');

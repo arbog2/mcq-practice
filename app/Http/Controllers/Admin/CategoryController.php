@@ -81,4 +81,16 @@ class CategoryController extends Controller
 
         return response()->json(['message' => '分类已删除。', 'reload' => true]);
     }
+
+    public function toggleActive(Category $category)
+    {
+        $category->update([
+            'is_active' => ! $category->is_active,
+        ]);
+
+        return response()->json([
+            'message' => '分类已' . ($category->is_active ? '启用' : '禁用') . '。',
+            'is_active' => $category->is_active,
+        ]);
+    }
 }

@@ -29,7 +29,12 @@
                             <td><strong>{{ $category->name }}</strong></td>
                             <td class="muted">{{ $category->slug }}</td>
                             <td>{{ $category->sort_order }}</td>
-                            <td>{{ $category->is_active ? '是' : '否' }}</td>
+                            <td>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="toggle-active" data-id="{{ $category->id }}" {{ $category->is_active ? 'checked' : '' }}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
                             <td style="text-align:right;">
                                 <button class="btn" onclick="openAjaxModal('{{ route('admin.categories.edit', $category) }}', '编辑分类')">编辑</button>
                                 <button class="btn btn-danger" onclick="deleteCategory({{ $category->id }})">删除</button>
@@ -51,3 +56,59 @@
         </div>
     </div>
 @endsection
+
+<style>
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+.toggle-switch input {
+    display: none;
+}
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 24px;
+    transition: .3s;
+}
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: .3s;
+}
+.toggle-switch input:checked + .toggle-slider {
+    background: #22c55e;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+</style>
+
+<script>
+document.querySelectorAll('.toggle-active').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var csrf = document.querySelector('meta[name="csrf-token"]').content;
+        fetch('/admin/categories/' + this.dataset.id + '/toggle-active', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrf,
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Accept': 'application/json',
+            },
+            body: '_token=' + encodeURIComponent(csrf)
+        }).then(function(res) {
+            if (!res.ok) { location.reload(); }
+        });
+    });
+});
+</script>
