@@ -55,7 +55,6 @@
             <div class="modal-body" id="ajax-modal-body"></div>
         </div>
     </div>
-@endsection
 
 <style>
 .toggle-switch {
@@ -112,3 +111,4 @@ document.querySelectorAll('.toggle-active').forEach(function(cb) {
     });
 });
 </script>
+@endsection
