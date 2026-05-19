@@ -20,9 +20,9 @@ class StatsController extends Controller
 
         $perPage = (int) config('practice.pagination.questions', 20);
         $rows = $this->wrongStatsQuery($request)
-            ->orderByRaw('COALESCE(parent_org_name, "") asc')
-            ->orderByRaw('COALESCE(child_org_name, "") asc')
-            ->orderBy('category_name')
+            ->orderByRaw('COALESCE(MAX(parent.name), "") asc')
+            ->orderByRaw('COALESCE(MAX(ou.name), "") asc')
+            ->orderByRaw('MAX(c.name) asc')
             ->orderByDesc('wrong_events')
             ->orderBy('question_id')
             ->paginate($perPage)
@@ -53,9 +53,9 @@ class StatsController extends Controller
     public function exportWrongByCategory(Request $request): StreamedResponse
     {
         $rows = $this->wrongStatsQuery($request)
-            ->orderByRaw('COALESCE(parent_org_name, "") asc')
-            ->orderByRaw('COALESCE(child_org_name, "") asc')
-            ->orderBy('category_name')
+            ->orderByRaw('COALESCE(MAX(parent.name), "") asc')
+            ->orderByRaw('COALESCE(MAX(ou.name), "") asc')
+            ->orderByRaw('MAX(c.name) asc')
             ->orderByDesc('wrong_events')
             ->orderBy('question_id')
             ->get();
