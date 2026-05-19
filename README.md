@@ -79,6 +79,9 @@ php -r "unlink('composer-setup.php');"
 # 安装 MySQL
 sudo apt install -y mysql-server
 sudo mysql_secure_installation
+
+# 安装 Git
+sudo apt install -y git
 ```
 
 #### Windows
@@ -90,36 +93,46 @@ sudo mysql_secure_installation
 
 - 下载 phpEnv 完整版并解压
 - 打开 phpEnv 内置的 CMD 或 PowerShell 窗口运行下方的安装步骤
-- phpEnv 已内置 PHP、MySQL、Composer、Nginx/Apache，无需单独安装
+- phpEnv 已内置 PHP、MySQL、Composer、Git、Nginx/Apache，无需单独安装
+- 如需单独使用 Git，下载 Git for Windows：https://git-scm.com/download/win
 
 ### 安装步骤
 
 #### Linux / macOS
 
 ```bash
-# 1. 进入项目目录
+# 1. 克隆项目（二选一）
+# 从 Gitee 克隆
+git clone https://gitee.com/arbog/mcq-practice.git
+# 或从 GitHub 克隆
+git clone https://github.com/anomalyco/mcq-practice.git
+
+# 2. 进入项目目录
 cd mcq-practice
 
-# 2. 安装 PHP 依赖
+# 如需拉取最新代码（进入项目目录后执行）
+git pull
+
+# 3. 安装 PHP 依赖
 composer install --no-dev --optimize-autoloader
 
-# 3. 复制环境配置并生成 APP_KEY
+# 4. 复制环境配置并生成 APP_KEY
 cp .env.example .env
 php artisan key:generate
 
-# 4. 编辑 .env 配置数据库连接
+# 5. 编辑 .env 配置数据库连接
 # DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
 
-# 5. 创建数据库（如未创建）
+# 6. 创建数据库（如未创建）
 mysql -u root -p -e "CREATE DATABASE mcq_practice CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# 6. 运行迁移
+# 7. 运行迁移
 php artisan migrate
 
-# 7. 创建存储链接（用于编辑器图片上传）
+# 8. 创建存储链接（用于编辑器图片上传）
 php artisan storage:link
 
-# 8. 设置目录权限
+# 9. 设置目录权限
 chmod -R 775 storage bootstrap/cache
 chmod -R 775 public/storage
 ```
@@ -127,29 +140,38 @@ chmod -R 775 public/storage
 #### Windows (PowerShell)
 
 ```powershell
-# 1. 进入项目目录
+# 1. 克隆项目（二选一）
+# 从 Gitee 克隆
+git clone https://gitee.com/arbog/mcq-practice.git
+# 或从 GitHub 克隆
+git clone https://github.com/anomalyco/mcq-practice.git
+
+# 2. 进入项目目录
 cd mcq-practice
 
-# 2. 安装 PHP 依赖
+# 如需拉取最新代码（进入项目目录后执行）
+git pull
+
+# 3. 安装 PHP 依赖
 composer install --no-dev --optimize-autoloader
 
-# 3. 复制环境配置并生成 APP_KEY
+# 4. 复制环境配置并生成 APP_KEY
 copy .env.example .env
 php artisan key:generate
 
-# 4. 编辑 .env 配置数据库连接
+# 5. 编辑 .env 配置数据库连接
 # DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
 
-# 5. 创建数据库（如未创建）
+# 6. 创建数据库（如未创建）
 mysql -u root -p -e "CREATE DATABASE mcq_practice CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# 6. 运行迁移
+# 7. 运行迁移
 php artisan migrate
 
-# 7. 创建存储链接（用于编辑器图片上传）
+# 8. 创建存储链接（用于编辑器图片上传）
 php artisan storage:link
 
-# 8. 目录权限（Windows 无需设置，跳过此步）
+# 9. 目录权限（Windows 无需设置，跳过此步）
 ```
 
 #### 步骤 9（两种操作系统通用，二选一）
