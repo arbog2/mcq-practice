@@ -94,7 +94,7 @@ sudo apt install -y git
 - 下载 phpEnv 完整版并解压
 - 打开 phpEnv 内置的 CMD 或 PowerShell 窗口运行下方的安装步骤
 - phpEnv 已内置 PHP、MySQL、Composer、Nginx/Apache，无需单独安装
-- 如需单独使用 Git，下载 Git for Windows：https://git-scm.com/download/win
+- 下载 Git for Windows：https://git-scm.com/download/win，按照步骤安装，选择php执行文件位于 phpev
 
 ### 安装步骤
 
