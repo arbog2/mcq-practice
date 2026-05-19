@@ -105,7 +105,7 @@ sudo apt install -y git
 # 从 Gitee 克隆
 git clone https://gitee.com/arbog/mcq-practice.git
 # 或从 GitHub 克隆
-git clone https://github.com/anomalyco/mcq-practice.git
+git clone https://github.com/arbog2/mcq-practice.git
 
 # 2. 进入项目目录
 cd mcq-practice
@@ -144,7 +144,7 @@ chmod -R 775 public/storage
 # 从 Gitee 克隆
 git clone https://gitee.com/arbog/mcq-practice.git
 # 或从 GitHub 克隆
-git clone https://github.com/anomalyco/mcq-practice.git
+git clone https://github.com/arbog2/mcq-practice.git
 
 # 2. 进入项目目录
 cd mcq-practice
