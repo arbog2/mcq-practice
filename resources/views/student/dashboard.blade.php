@@ -16,6 +16,7 @@
         <div class="row">
             <a class="btn btn-primary" href="{{ route('student.categories') }}">选择分类开始练习</a>
             <a class="btn" href="{{ route('student.wrong-book') }}">错题本</a>
+            <a class="btn" href="{{ route('student.attempts.history') }}">练习历史</a>
         </div>
 
         <div class="muted">

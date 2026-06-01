@@ -189,7 +189,9 @@
                     @else
                         <a href="{{ route('student.dashboard') }}">学员首页</a>
                         <a href="{{ route('student.categories') }}">开始练习</a>
+                        <a href="{{ route('student.attempts.history') }}">练习历史</a>
                         <a href="{{ route('student.wrong-book') }}">错题本</a>
+                        <a href="{{ route('student.profile.edit') }}">个人资料</a>
                     @endif
                     <span class="muted">{{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}" style="display:inline;">
