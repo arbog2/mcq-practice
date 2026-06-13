@@ -50,7 +50,9 @@
                     </select>
                     <button class="btn btn-primary" id="batch-move-btn" disabled>转移</button>
                 </label>
+                @if(auth()->user()->isSuperAdmin())
                 <button class="btn btn-danger" id="batch-delete-btn" disabled>删除</button>
+                @endif
             </div>
         </div>
 
@@ -76,8 +78,10 @@
                             <td>{{ $question->is_active ? '是' : '否' }}</td>
                             <td style="text-align:right;">
                                 <button class="btn btn-primary" onclick="openAjaxModal('{{ route('admin.questions.move.form', $question) }}', '转移分类')" style="font-size:12px;padding:4px 8px;">转移</button>
+                                @if(auth()->user()->isSuperAdmin())
                                 <button class="btn" onclick="openAjaxModal('{{ route('admin.questions.edit', $question) }}', '编辑题目')" style="font-size:12px;padding:4px 8px;">编辑</button>
                                 <button class="btn btn-danger" onclick="deleteQuestion({{ $question->id }})" style="font-size:12px;padding:4px 8px;">删除</button>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

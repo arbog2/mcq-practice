@@ -19,16 +19,16 @@ class QuestionPolicy
 
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 
     public function update(User $user, Question $question): bool
     {
-        return $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 
     public function delete(User $user, Question $question): bool
     {
-        return $user->isAdmin();
+        return $user->isSuperAdmin();
     }
 }

@@ -11,6 +11,8 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+
         $categories = Category::query()
             ->orderBy('sort_order')
             ->orderBy('name')

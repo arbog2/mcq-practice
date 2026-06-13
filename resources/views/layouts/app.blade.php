@@ -171,7 +171,9 @@
                 @auth
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}">后台</a>
-                        <a href="{{ route('admin.categories.index') }}">分类</a>
+                        @if(auth()->user()->isSuperAdmin())
+                            <a href="{{ route('admin.categories.index') }}">题库分类</a>
+                        @endif
                         <a href="{{ route('admin.questions.index') }}">题库</a>
                         @if(auth()->user()->canManageUsers())
                             <a href="{{ route('admin.users.index') }}">学员</a>
