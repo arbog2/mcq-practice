@@ -116,6 +116,26 @@
             background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted);
         }
         .modal-body { padding: 18px; }
+
+        /* 后台左栏布局 */
+        .admin-layout { display: flex; min-height: 100vh; }
+        .admin-layout header {
+            width: 220px; flex-shrink: 0; border-bottom: none;
+            border-right: 1px solid var(--border); display: flex;
+            flex-direction: column; position: sticky; top: 0; height: 100vh;
+        }
+        .admin-layout header .topbar {
+            flex-direction: column; align-items: stretch; max-width: none;
+            padding: 20px 16px; flex: 1;
+        }
+        .admin-layout header .nav { flex-direction: column; gap: 4px; }
+        .admin-layout header .nav a {
+            display: block; padding: 8px 12px; border-radius: 8px; font-size: 14px;
+        }
+        .admin-layout header .nav a:hover { background: #f3f4f6; }
+        .admin-layout main { flex: 1; min-width: 0; overflow-x: auto; }
+        .admin-layout main .wrap { max-width: none; padding: 22px 24px 40px; }
+        .admin-layout .logout-wrap { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
     </style>
     @stack('head')
     <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
@@ -163,13 +183,13 @@
         }
     </script>
 </head>
-<body>
+<body class="{{ auth()->user()?->isAdmin() ? 'admin-layout' : '' }}">
     <header>
         <div class="wrap topbar">
             <div class="brand"><a href="{{ route('home') }}">{{ config('app.name') }}</a></div>
+            @auth
+                @if(auth()->user()->isAdmin())
             <nav class="nav">
-                @auth
-                    @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}">后台</a>
                         @if(auth()->user()->isSuperAdmin())
                             <a href="{{ route('admin.categories.index') }}">题库分类</a>
@@ -188,25 +208,36 @@
                             <a href="{{ route('admin.settings.index') }}">系统设置</a>
                         @endif
                         <a href="{{ route('admin.profile.edit') }}">我的资料</a>
-                    @else
+            </nav>
+            <div class="logout-wrap">
+                <span class="muted">{{ auth()->user()->name }}</span>
+                <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+                    @csrf
+                    <button class="btn" type="submit">退出</button>
+                </form>
+            </div>
+                @else
+            <nav class="nav">
                         <a href="{{ route('student.dashboard') }}">学员首页</a>
                         <a href="{{ route('student.categories') }}">开始练习</a>
                         <a href="{{ route('student.attempts.history') }}">练习历史</a>
                         <a href="{{ route('student.wrong-book') }}">错题本</a>
                         <a href="{{ route('student.profile.edit') }}">个人资料</a>
-                    @endif
-                    <span class="muted">{{ auth()->user()->name }}</span>
-                    <form method="POST" action="{{ route('logout') }}" style="display:inline;">
-                        @csrf
-                        <button class="btn" type="submit">退出</button>
-                    </form>
-                @else
-                    <a href="{{ route('login') }}">登录</a>
-                    @if(\App\Models\Setting::get('registration_enabled', false))
-                        <a href="{{ route('register') }}">注册</a>
-                    @endif
-                @endauth
+                <span class="muted">{{ auth()->user()->name }}</span>
+                <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+                    @csrf
+                    <button class="btn" type="submit">退出</button>
+                </form>
             </nav>
+                @endif
+            @else
+            <nav class="nav">
+                <a href="{{ route('login') }}">登录</a>
+                @if(\App\Models\Setting::get('registration_enabled', false))
+                    <a href="{{ route('register') }}">注册</a>
+                @endif
+            </nav>
+            @endauth
         </div>
     </header>
 
