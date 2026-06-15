@@ -138,7 +138,7 @@ class PracticeService
                     }
                 }
 
-                $total = $attempt->question_count ?: $attempt->questions()->count();
+                $total = $attempt->question_count ?: $attempt->questions->count();
 
                 $attempt->update([
                     'correct_count' => $correct,

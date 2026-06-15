@@ -20,7 +20,7 @@
         </div>
 
         <div class="muted">
-            每次题量：{{ (int) \App\Models\Setting::get('questions_per_session', config('practice.questions_per_session')) }} 题（可在后台"系统设置"调整）。
+            每次题量：{{ $settings['questions_per_session'] }} 题（可在后台"系统设置"调整）。
         </div>
     </div>
 @endsection

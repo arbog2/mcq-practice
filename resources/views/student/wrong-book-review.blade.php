@@ -43,7 +43,7 @@
                         @foreach ($categories as $cat)
                             <tr>
                                 <td><strong>{{ $cat->name }}</strong></td>
-                                <td>{{ $cat->wrong_count }}</td>
+                                <td>{{ $cat->wrong_questions_count }}</td>
                                 <td style="text-align:right;">
                                     @if($cat->wrong_count > 0)
                                         <form method="POST" action="{{ route('student.wrong-book.review.start') }}" style="display:inline;">

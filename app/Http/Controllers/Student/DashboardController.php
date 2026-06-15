@@ -8,6 +8,8 @@ class DashboardController extends Controller
 {
     public function __invoke()
     {
+        auth()->user()->load('organizationUnit');
+
         return view('student.dashboard');
     }
 }

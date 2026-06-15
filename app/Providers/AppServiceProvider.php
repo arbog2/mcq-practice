@@ -2,11 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
 use App\Models\User;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,6 +34,14 @@ class AppServiceProvider extends ServiceProvider
             return $user->isAdmin()
                 ? route('admin.dashboard')
                 : route('student.dashboard');
+        });
+
+        View::composer(['layouts.app', 'student.dashboard', 'admin.dashboard'], function ($view) {
+            $view->with('settings', [
+                'registration_enabled' => Setting::get('registration_enabled', false),
+                'registration_requires_approval' => Setting::get('registration_requires_approval', false),
+                'questions_per_session' => (int) Setting::get('questions_per_session', config('practice.questions_per_session')),
+            ]);
         });
     }
 }

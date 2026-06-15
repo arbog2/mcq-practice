@@ -69,14 +69,10 @@ class WrongBookController extends Controller
             })
             ->orderBy('sort_order')
             ->orderBy('name')
-            ->get()
-            ->map(function ($category) use ($userId) {
-                $category->wrong_count = UserWrongQuestion::where('user_id', $userId)
-                    ->where('category_id', $category->id)
-                    ->whereNull('mastered_at')
-                    ->count();
-                return $category;
-            });
+            ->withCount(['wrongQuestions' => function ($q) use ($userId) {
+                $q->where('user_id', $userId)->whereNull('mastered_at');
+            }])
+            ->get();
 
         return view('student.wrong-book-review', compact('totalWrong', 'categories'));
     }

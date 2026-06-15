@@ -18,5 +18,23 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            return redirect()->route('home')->with('status', '页面不存在。');
+        });
+
+        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+
+            return back()->withErrors($e->errors())->withInput();
+        });
+
+        $exceptions->render(function (\RuntimeException $e, $request) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['message' => $e->getMessage()], 500);
+            }
+
+            return back()->withErrors(['error' => $e->getMessage()]);
+        });
     })->create();

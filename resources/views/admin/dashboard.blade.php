@@ -29,13 +29,13 @@
             <div class="card stack">
                 <h2>注册开关状态</h2>
                 <div class="muted">
-                    @if(\App\Models\Setting::get('registration_enabled', false))
+                    @if($settings['registration_enabled'])
                         自助注册：已开启
                     @else
                         自助注册：已关闭
                     @endif
                     •
-                    @if(\App\Models\Setting::get('registration_requires_approval', false))
+                    @if($settings['registration_requires_approval'])
                         注册需审核：是
                     @else
                         注册需审核：否

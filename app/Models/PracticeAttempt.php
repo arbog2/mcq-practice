@@ -53,6 +53,7 @@ class PracticeAttempt extends Model
         return $this->belongsToMany(Question::class, 'practice_attempt_questions', 'practice_attempt_id', 'question_id')
             ->withPivot('display_order')
             ->withTimestamps()
-            ->orderByPivot('display_order');
+            ->orderByPivot('display_order')
+            ->withTrashed();
     }
 }

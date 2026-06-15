@@ -44,9 +44,9 @@ class QuestionController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    private function questionRules(): array
     {
-        $validated = $request->validate([
+        return [
             'category_id' => ['required', 'exists:categories,id'],
             'stem' => ['required', 'string'],
             'explanation' => ['nullable', 'string'],
@@ -58,8 +58,11 @@ class QuestionController extends Controller
             'option2' => ['required', 'string'],
             'option3' => ['required', 'string'],
             'correct_index' => ['required', 'integer', 'min:0', 'max:3'],
-        ]);
+        ];
+    }
 
+    private function buildOptionsData(array $validated): array
+    {
         $labels = ['A', 'B', 'C', 'D'];
         $options = [];
         for ($i = 0; $i < 4; $i++) {
@@ -69,6 +72,13 @@ class QuestionController extends Controller
                 'is_correct' => ($i === (int) $validated['correct_index']),
             ];
         }
+        return $options;
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate($this->questionRules());
+        $options = $this->buildOptionsData($validated);
 
         $questionId = null;
         DB::transaction(function () use ($validated, $options, $request, &$questionId) {
@@ -111,29 +121,8 @@ class QuestionController extends Controller
 
     public function update(Request $request, Question $question)
     {
-        $validated = $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
-            'stem' => ['required', 'string'],
-            'explanation' => ['nullable', 'string'],
-            'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
-            'score' => ['nullable', 'integer', 'min:1', 'max:999'],
-            'is_active' => ['sometimes', 'boolean'],
-            'option0' => ['required', 'string'],
-            'option1' => ['required', 'string'],
-            'option2' => ['required', 'string'],
-            'option3' => ['required', 'string'],
-            'correct_index' => ['required', 'integer', 'min:0', 'max:3'],
-        ]);
-
-        $labels = ['A', 'B', 'C', 'D'];
-        $options = [];
-        for ($i = 0; $i < 4; $i++) {
-            $options[] = [
-                'label' => $labels[$i],
-                'content' => $validated['option'.$i],
-                'is_correct' => ($i === (int) $validated['correct_index']),
-            ];
-        }
+        $validated = $request->validate($this->questionRules());
+        $options = $this->buildOptionsData($validated);
 
         DB::transaction(function () use ($validated, $options, $question, $request) {
             $question->update([
@@ -144,14 +133,12 @@ class QuestionController extends Controller
                 'score' => $validated['score'] ?? 1,
                 'is_active' => $request->boolean('is_active'),
             ]);
-            $question->options()->delete();
+
             foreach ($options as $opt) {
-                QuestionOption::create([
-                    'question_id' => $question->id,
-                    'label' => $opt['label'],
-                    'content' => $opt['content'],
-                    'is_correct' => $opt['is_correct'],
-                ]);
+                $question->options()->updateOrCreate(
+                    ['label' => $opt['label']],
+                    ['content' => $opt['content'], 'is_correct' => $opt['is_correct']]
+                );
             }
         });
 

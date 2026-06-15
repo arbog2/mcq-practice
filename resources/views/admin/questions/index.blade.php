@@ -119,6 +119,12 @@
 
     <script>
     (function() {
+        var routes = {
+            batchMove: @json(route('admin.questions.batch-move')),
+            batchScore: @json(route('admin.questions.batch-score')),
+            batchDestroy: @json(route('admin.questions.batch-destroy')),
+        };
+
         var selectAll = document.getElementById('select-all');
         var checkboxes = document.querySelectorAll('.q-checkbox');
         var batchBar = document.getElementById('batch-bar');
@@ -177,7 +183,7 @@
             if (!confirm('确认将 ' + ids.length + ' 道题目转移到所选分类？')) return;
             batchMoveBtn.disabled = true;
             batchMoveBtn.textContent = '转移中...';
-            postJson('{{ route('admin.questions.batch-move') }}', { ids: ids, category_id: catId })
+            postJson(routes.batchMove, { ids: ids, category_id: catId })
                 .then(function(data) { location.reload(); })
                 .catch(function() { alert('转移失败'); location.reload(); });
         });
@@ -189,7 +195,7 @@
             if (!confirm('确认将 ' + ids.length + ' 道题目分值设置为 ' + score + ' 分？')) return;
             batchScoreBtn.disabled = true;
             batchScoreBtn.textContent = '设置中...';
-            postJson('{{ route('admin.questions.batch-score') }}', { ids: ids, score: score })
+            postJson(routes.batchScore, { ids: ids, score: score })
                 .then(function(data) { location.reload(); })
                 .catch(function() { alert('设置失败'); location.reload(); });
         });
@@ -200,7 +206,7 @@
             if (!confirm('确认删除选中的 ' + ids.length + ' 道题目？此操作不可撤销。')) return;
             batchDeleteBtn.disabled = true;
             batchDeleteBtn.textContent = '删除中...';
-            postJson('{{ route('admin.questions.batch-destroy') }}', { ids: ids })
+            postJson(routes.batchDestroy, { ids: ids })
                 .then(function(data) { location.reload(); })
                 .catch(function() { alert('删除失败'); location.reload(); });
         });

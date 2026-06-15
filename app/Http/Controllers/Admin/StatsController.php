@@ -13,18 +13,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StatsController extends Controller
 {
+    private function applyDefaultSorting(Builder $query): Builder
+    {
+        return $query
+            ->orderByRaw('COALESCE(MAX(parent.name), "") asc')
+            ->orderByRaw('COALESCE(MAX(ou.name), "") asc')
+            ->orderByRaw('MAX(c.name) asc')
+            ->orderByDesc('wrong_events')
+            ->orderBy('question_id');
+    }
+
     public function wrongByCategory(Request $request)
     {
         $organizationUnitId = $request->query('organization_unit_id');
         $categoryId = $request->query('category_id');
 
         $perPage = (int) config('practice.pagination.questions', 20);
-        $rows = $this->wrongStatsQuery($request)
-            ->orderByRaw('COALESCE(MAX(parent.name), "") asc')
-            ->orderByRaw('COALESCE(MAX(ou.name), "") asc')
-            ->orderByRaw('MAX(c.name) asc')
-            ->orderByDesc('wrong_events')
-            ->orderBy('question_id')
+        $rows = $this->applyDefaultSorting($this->wrongStatsQuery($request))
             ->paginate($perPage)
             ->withQueryString();
 
@@ -52,13 +57,7 @@ class StatsController extends Controller
 
     public function exportWrongByCategory(Request $request): StreamedResponse
     {
-        $rows = $this->wrongStatsQuery($request)
-            ->orderByRaw('COALESCE(MAX(parent.name), "") asc')
-            ->orderByRaw('COALESCE(MAX(ou.name), "") asc')
-            ->orderByRaw('MAX(c.name) asc')
-            ->orderByDesc('wrong_events')
-            ->orderBy('question_id')
-            ->get();
+        $rows = $this->applyDefaultSorting($this->wrongStatsQuery($request))->get();
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',

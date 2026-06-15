@@ -25,15 +25,9 @@
                 $answer = $answersByQuestionId->get($question->id);
                 $selected = $answer?->selectedOption;
                 $correct = $question->options->firstWhere('is_correct', true);
-                $seed = crc32($attempt->id.'-'.$question->id);
-                $shuffled = $question->options->shuffle($seed)->values();
-                $labels = ['A', 'B', 'C', 'D'];
-                $selectedLabel = null;
-                $correctLabel = null;
-                foreach ($shuffled as $i => $opt) {
-                    if ($selected && $opt->id === $selected->id) $selectedLabel = $labels[$i];
-                    if ($correct && $opt->id === $correct->id) $correctLabel = $labels[$i];
-                }
+                $shuffled = \App\Helpers\QuestionHelper::shuffledOptions($attempt, $question);
+                $selectedLabel = \App\Helpers\QuestionHelper::labelForOption($shuffled, $selected?->id);
+                $correctLabel = \App\Helpers\QuestionHelper::labelForOption($shuffled, $correct?->id);
             @endphp
 
             <div class="card stack">
@@ -52,7 +46,7 @@
 
                 <div class="stack" style="gap:8px; margin:8px 0;">
                     @foreach ($shuffled as $i => $opt)
-                        <div><span class="rich-text"><strong>{{ $labels[$i] }}.</strong> {!! $opt->content !!}</span></div>
+                        <div><span class="rich-text"><strong>{{ ['A','B','C','D'][$i] }}.</strong> {!! $opt->content !!}</span></div>
                     @endforeach
                 </div>
 

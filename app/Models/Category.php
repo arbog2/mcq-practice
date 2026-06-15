@@ -25,4 +25,9 @@ class Category extends Model
     {
         return $this->hasMany(Question::class);
     }
+
+    public function wrongQuestions(): HasMany
+    {
+        return $this->hasMany(UserWrongQuestion::class);
+    }
 }
