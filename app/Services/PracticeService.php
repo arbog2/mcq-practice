@@ -16,31 +16,34 @@ class PracticeService
     {
         $perSession = max(1, (int) Setting::get('questions_per_session', config('practice.questions_per_session')));
 
-        $questionIds = Question::query()
+        $questions = Question::query()
             ->where('category_id', $category->id)
             ->where('is_active', true)
             ->inRandomOrder()
             ->limit($perSession)
-            ->pluck('id');
+            ->get(['id', 'score']);
 
-        if ($questionIds->isEmpty()) {
+        if ($questions->isEmpty()) {
             throw new \RuntimeException('该分类下暂无可用题目。');
         }
 
-        return DB::transaction(function () use ($questionIds, $category, $userId) {
+        $totalScore = $questions->sum('score');
+
+        return DB::transaction(function () use ($questions, $totalScore, $category, $userId) {
             $attempt = PracticeAttempt::create([
                 'user_id' => $userId,
                 'category_id' => $category->id,
-                'question_count' => $questionIds->count(),
+                'question_count' => $questions->count(),
                 'correct_count' => 0,
                 'score' => 0,
+                'total_score' => $totalScore,
                 'status' => PracticeAttempt::STATUS_IN_PROGRESS,
                 'started_at' => now(),
             ]);
 
             $order = 1;
-            foreach ($questionIds as $questionId) {
-                $attempt->questions()->attach($questionId, [
+            foreach ($questions as $question) {
+                $attempt->questions()->attach($question->id, [
                     'display_order' => $order,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -58,20 +61,24 @@ class PracticeService
             throw new \RuntimeException('没有可用的题目。');
         }
 
-        return DB::transaction(function () use ($questionIds, $categoryId, $userId) {
+        $questions = Question::whereIn('id', $questionIds)->get(['id', 'score']);
+        $totalScore = $questions->sum('score');
+
+        return DB::transaction(function () use ($questions, $totalScore, $categoryId, $userId) {
             $attempt = PracticeAttempt::create([
                 'user_id' => $userId,
                 'category_id' => $categoryId,
-                'question_count' => $questionIds->count(),
+                'question_count' => $questions->count(),
                 'correct_count' => 0,
                 'score' => 0,
+                'total_score' => $totalScore,
                 'status' => PracticeAttempt::STATUS_IN_PROGRESS,
                 'started_at' => now(),
             ]);
 
             $order = 1;
-            foreach ($questionIds as $questionId) {
-                $attempt->questions()->attach($questionId, [
+            foreach ($questions as $question) {
+                $attempt->questions()->attach($question->id, [
                     'display_order' => $order,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -88,6 +95,7 @@ class PracticeService
         try {
             return DB::transaction(function () use ($attempt, $answers) {
                 $correct = 0;
+                $correctScore = 0;
                 $attempt->load('questions.options');
 
                 foreach ($attempt->questions as $question) {
@@ -99,6 +107,7 @@ class PracticeService
 
                     if ($isCorrect) {
                         $correct++;
+                        $correctScore += ($question->score ?? 1);
                     }
 
                     PracticeAttemptAnswer::updateOrCreate(
@@ -130,16 +139,15 @@ class PracticeService
                 }
 
                 $total = $attempt->question_count ?: $attempt->questions()->count();
-                $score = $total > 0 ? (int) round(($correct / $total) * 100) : 0;
 
                 $attempt->update([
                     'correct_count' => $correct,
-                    'score' => $score,
+                    'score' => $correctScore,
                     'status' => PracticeAttempt::STATUS_SUBMITTED,
                     'submitted_at' => now(),
                 ]);
 
-                return ['correct' => $correct, 'total' => $total, 'score' => $score];
+                return ['correct' => $correct, 'total' => $total, 'score' => $correctScore, 'total_score' => $attempt->total_score];
             });
         } catch (\Throwable $e) {
             report($e);

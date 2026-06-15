@@ -12,7 +12,7 @@
             <h1>练习结果</h1>
             <p class="muted">
                 分类：{{ $attempt->category->name }}；
-                得分：<strong>{{ $attempt->score }}</strong> 分（正确 {{ $attempt->correct_count }} / {{ $attempt->question_count }}）
+                得分：<strong>{{ $attempt->score }}</strong> / {{ $attempt->total_score }} 分（正确 {{ $attempt->correct_count }} / {{ $attempt->question_count }}）
             </p>
             <div class="row">
                 <a class="btn btn-primary" href="{{ route('student.categories') }}">继续练习</a>

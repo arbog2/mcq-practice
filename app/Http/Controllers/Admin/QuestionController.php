@@ -51,6 +51,7 @@ class QuestionController extends Controller
             'stem' => ['required', 'string'],
             'explanation' => ['nullable', 'string'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'score' => ['nullable', 'integer', 'min:1', 'max:999'],
             'is_active' => ['sometimes', 'boolean'],
             'option0' => ['required', 'string'],
             'option1' => ['required', 'string'],
@@ -76,6 +77,7 @@ class QuestionController extends Controller
                 'stem' => $validated['stem'],
                 'explanation' => $validated['explanation'] ?? null,
                 'difficulty' => $validated['difficulty'] ?? null,
+                'score' => $validated['score'] ?? 1,
                 'is_active' => $request->boolean('is_active'),
             ]);
             $questionId = $question->id;
@@ -114,6 +116,7 @@ class QuestionController extends Controller
             'stem' => ['required', 'string'],
             'explanation' => ['nullable', 'string'],
             'difficulty' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'score' => ['nullable', 'integer', 'min:1', 'max:999'],
             'is_active' => ['sometimes', 'boolean'],
             'option0' => ['required', 'string'],
             'option1' => ['required', 'string'],
@@ -138,6 +141,7 @@ class QuestionController extends Controller
                 'stem' => $validated['stem'],
                 'explanation' => $validated['explanation'] ?? null,
                 'difficulty' => $validated['difficulty'] ?? null,
+                'score' => $validated['score'] ?? 1,
                 'is_active' => $request->boolean('is_active'),
             ]);
             $question->options()->delete();
@@ -201,6 +205,18 @@ class QuestionController extends Controller
         $count = Question::whereIn('id', $validated['ids'])->delete();
         Log::record('批量删除题目', 'question', "批量删除 {$count} 道题目");
         return response()->json(['message' => "已批量删除 {$count} 道题目。", 'reload' => true]);
+    }
+
+    public function batchScore(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['exists:questions,id'],
+            'score' => ['required', 'integer', 'min:1', 'max:999'],
+        ]);
+        $count = Question::whereIn('id', $validated['ids'])->update(['score' => $validated['score']]);
+        Log::record('批量设置分值', 'question', "批量设置 {$count} 道题目分值为 {$validated['score']}");
+        return response()->json(['message' => "已批量设置 {$count} 道题目分值为 {$validated['score']}。", 'reload' => true]);
     }
 
     public function importForm()

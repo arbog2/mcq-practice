@@ -14,12 +14,14 @@ class Question extends Model
         'explanation',
         'difficulty',
         'is_active',
+        'score',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'score' => 'integer',
         ];
     }
 

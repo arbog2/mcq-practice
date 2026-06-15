@@ -18,7 +18,7 @@
                         <strong>{{ $attempt->category->name ?? '未分类' }}</strong>
                         <span class="muted">
                             {{ $attempt->submitted_at?->format('Y-m-d H:i') ?? '—' }}
-                            得分 {{ $attempt->score }}（{{ $attempt->correct_count }}/{{ $attempt->question_count }}）
+                             得分 {{ $attempt->score }}/{{ $attempt->total_score }}（正确 {{ $attempt->correct_count }}/{{ $attempt->question_count }}）
                         </span>
                     </div>
                     <a class="btn" href="{{ route('student.attempts.result', $attempt) }}">查看</a>

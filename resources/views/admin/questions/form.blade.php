@@ -26,6 +26,8 @@
         
         <label>难度<input type="number" name="difficulty" value="{{ $question->difficulty ?? '' }}" min="1" max="5"></label>
         
+        <label>分值<input type="number" name="score" value="{{ old('score', $question->score ?? 1) }}" min="1" max="999"></label>
+        
         <fieldset><legend>选项（选择正确答案）</legend>
         @for($i = 0; $i < 4; $i++)
         <label class="row">

@@ -31,7 +31,7 @@
                         $labels = ['A', 'B', 'C', 'D'];
                     @endphp
                     <div class="card stack question-card" data-index="{{ $index }}">
-                        <div><span class="pill">第 {{ $index + 1 }} / {{ $qTotal }} 题</span></div>
+                        <div><span class="pill">第 {{ $index + 1 }} / {{ $qTotal }} 题</span> <span class="muted" style="font-size:0.85em;">{{ $question->score ?? 1 }} 分</span></div>
                         <div class="rich-text">{!! $question->stem !!}</div>
 
                         <div class="stack" style="gap:10px;">

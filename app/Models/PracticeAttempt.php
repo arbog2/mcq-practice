@@ -19,6 +19,7 @@ class PracticeAttempt extends Model
         'question_count',
         'correct_count',
         'score',
+        'total_score',
         'status',
         'started_at',
         'submitted_at',

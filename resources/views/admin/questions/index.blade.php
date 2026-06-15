@@ -50,6 +50,11 @@
                     </select>
                     <button class="btn btn-primary" id="batch-move-btn" disabled>转移</button>
                 </label>
+                <label class="row" style="gap:10px;align-items:center;">
+                    <span class="muted">批量设置分值</span>
+                    <input type="number" id="batch-score-value" value="1" min="1" max="999" style="width:70px;">
+                    <button class="btn btn-primary" id="batch-score-btn" disabled>设置</button>
+                </label>
                 @if(auth()->user()->isSuperAdmin())
                 <button class="btn btn-danger" id="batch-delete-btn" disabled>删除</button>
                 @endif
@@ -64,6 +69,7 @@
                         <th>ID</th>
                         <th>分类</th>
                         <th>题干</th>
+                        <th>分值</th>
                         <th>启用</th>
                         <th style="text-align:right;">操作</th>
                     </tr>
@@ -75,6 +81,7 @@
                             <td>{{ $question->id }}</td>
                             <td><span class="q-cat">{{ $question->category->name }}</span></td>
                             <td style="max-width:350px;">{{ \Illuminate\Support\Str::limit($question->stem, 80) }}</td>
+                            <td>{{ $question->score ?? 1 }}</td>
                             <td>{{ $question->is_active ? '是' : '否' }}</td>
                             <td style="text-align:right;">
                                 <button class="btn btn-primary" onclick="openAjaxModal('{{ route('admin.questions.move.form', $question) }}', '转移分类')" style="font-size:12px;padding:4px 8px;">转移</button>
@@ -118,6 +125,8 @@
         var batchCount = document.getElementById('batch-count');
         var batchCategory = document.getElementById('batch-category');
         var batchMoveBtn = document.getElementById('batch-move-btn');
+        var batchScoreBtn = document.getElementById('batch-score-btn');
+        var batchScoreValue = document.getElementById('batch-score-value');
         var batchDeleteBtn = document.getElementById('batch-delete-btn');
         var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -137,6 +146,7 @@
                 batchBar.style.display = 'none';
             }
             batchMoveBtn.disabled = count === 0 || !batchCategory.value;
+            batchScoreBtn.disabled = count === 0;
             batchDeleteBtn.disabled = count === 0;
         }
 
@@ -170,6 +180,18 @@
             postJson('{{ route('admin.questions.batch-move') }}', { ids: ids, category_id: catId })
                 .then(function(data) { location.reload(); })
                 .catch(function() { alert('转移失败'); location.reload(); });
+        });
+
+        batchScoreBtn.addEventListener('click', function() {
+            var ids = getCheckedIds();
+            var score = batchScoreValue.value;
+            if (ids.length === 0 || !score) return;
+            if (!confirm('确认将 ' + ids.length + ' 道题目分值设置为 ' + score + ' 分？')) return;
+            batchScoreBtn.disabled = true;
+            batchScoreBtn.textContent = '设置中...';
+            postJson('{{ route('admin.questions.batch-score') }}', { ids: ids, score: score })
+                .then(function(data) { location.reload(); })
+                .catch(function() { alert('设置失败'); location.reload(); });
         });
 
         batchDeleteBtn.addEventListener('click', function() {

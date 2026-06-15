@@ -84,6 +84,16 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                     continue;
                 }
 
+                $scoreRaw = $r['score'] ?? null;
+                $score = 1;
+                if ($scoreRaw !== null && $scoreRaw !== '') {
+                    $score = (int) $scoreRaw;
+                    if ($score < 1 || $score > 999) {
+                        $errors[] = __('第 :row 行：score 需在 1-999 之间或留空。', ['row' => $rowNumber]);
+                        continue;
+                    }
+                }
+
                 if (! empty($errors)) {
                     return;
                 }
@@ -96,6 +106,7 @@ class QuestionsImport implements ToCollection, WithHeadingRow
                     'stem' => $stem,
                     'explanation' => $explanation,
                     'difficulty' => $difficulty,
+                    'score' => $score,
                     'is_active' => $isActive,
                 ]);
 
