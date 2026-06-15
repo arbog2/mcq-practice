@@ -251,11 +251,13 @@
         if (window.innerWidth < 768) {
             modeSelect.value = 'mobile';
             switchMode('mobile');
-        } else if (savedMode === 'single') {
+        } else if (savedMode) {
+            modeSelect.value = savedMode;
+            switchMode(savedMode);
+        } else {
             modeSelect.value = 'single';
             switchMode('single');
-        } else {
-            switchMode('all');
+            localStorage.setItem('attempt-mode', 'single');
         }
     })();
     </script>
