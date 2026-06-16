@@ -76,6 +76,7 @@ class StatsController extends Controller
                 'question_category_name',
                 'question_id',
                 'wrong_events',
+                'source',
                 'stem_plain_preview',
             ]);
 
@@ -92,6 +93,7 @@ class StatsController extends Controller
                     $row->category_name,
                     $row->question_id,
                     $row->wrong_events,
+                    $row->sources ?? '—',
                     mb_substr((string) $stemPreview, 0, 200),
                 ]);
             }
@@ -104,20 +106,42 @@ class StatsController extends Controller
      * 统计口径：学员答卷中判错的记录条数（同一学员多次做错同一题会计多次）。
      *
      * 聚合维度：用户二级分类（organization_unit_id）→ 题库分类 → 题目。
+     * 数据来源：分类练习（practice_attempt_answers）+ 试卷练习（paper_attempt_answers）。
      */
     private function wrongStatsQuery(Request $request): Builder
     {
         $organizationUnitId = $request->query('organization_unit_id');
         $categoryId = $request->query('category_id');
 
-        $query = DB::table('practice_attempt_answers as paa')
+        $sub = DB::table('practice_attempt_answers as paa')
             ->join('practice_attempts as pa', 'pa.id', '=', 'paa.practice_attempt_id')
-            ->join('users as u', 'u.id', '=', 'pa.user_id')
+            ->where('paa.is_correct', false)
+            ->where('pa.status', PaperAttempt::STATUS_SUBMITTED)
+            ->select([
+                'pa.user_id',
+                'paa.question_id',
+                DB::raw("'分类练习' as source"),
+            ]);
+
+        $sub2 = DB::table('paper_attempt_answers as paa2')
+            ->join('paper_attempts as pa2', 'pa2.id', '=', 'paa2.paper_attempt_id')
+            ->where('paa2.is_correct', false)
+            ->where('pa2.status', PaperAttempt::STATUS_SUBMITTED)
+            ->select([
+                'pa2.user_id',
+                'paa2.question_id',
+                DB::raw("'试卷练习' as source"),
+            ]);
+
+        $union = $sub->unionAll($sub2);
+
+        $query = DB::table(DB::raw("({$union->toSql()}) as wrongs"))
+            ->mergeBindings($union)
+            ->join('users as u', 'u.id', '=', 'wrongs.user_id')
             ->leftJoin('organization_units as ou', 'ou.id', '=', 'u.organization_unit_id')
             ->leftJoin('organization_units as parent', 'parent.id', '=', 'ou.parent_id')
-            ->join('questions as q', 'q.id', '=', 'paa.question_id')
+            ->join('questions as q', 'q.id', '=', 'wrongs.question_id')
             ->join('categories as c', 'c.id', '=', 'q.category_id')
-            ->where('paa.is_correct', false)
             ->where('u.role', User::ROLE_STUDENT);
 
         if ($organizationUnitId === '__none__') {
@@ -138,7 +162,8 @@ class StatsController extends Controller
             DB::raw('MAX(c.name) as category_name'),
             'q.id as question_id',
             DB::raw('MAX(q.stem) as stem'),
-            DB::raw('COUNT(paa.id) as wrong_events'),
+            DB::raw('COUNT(*) as wrong_events'),
+            DB::raw("GROUP_CONCAT(DISTINCT wrongs.source ORDER BY wrongs.source SEPARATOR '、') as sources"),
         ])->groupBy('u.organization_unit_id', 'c.id', 'q.id');
     }
 

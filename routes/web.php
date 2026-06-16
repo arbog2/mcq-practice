@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EditorUploadController as AdminEditorUploadController;
 use App\Http\Controllers\Admin\OrganizationUnitController as AdminOrganizationUnitController;
+use App\Http\Controllers\Admin\PaperController as AdminPaperController;
 use App\Http\Controllers\Admin\QuestionController as AdminQuestionController;
 use App\Http\Controllers\Admin\LogController as AdminLogController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
@@ -15,8 +16,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Student\PaperController as StudentPaperController;
 use App\Http\Controllers\Student\PendingApprovalController;
-use App\Http\Controllers\Student\PracticeController;
 use App\Http\Controllers\Student\StudentProfileController;
 use App\Http\Controllers\Student\WrongBookController;
 use Illuminate\Support\Facades\Route;
@@ -59,18 +60,21 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'student'])->group(function () {
     Route::get('/student', StudentDashboardController::class)->name('student.dashboard');
 
-    Route::get('/practice/categories', [PracticeController::class, 'categories'])->name('student.categories');
-    Route::post('/practice/categories/{category}/start', [PracticeController::class, 'start'])->name('student.categories.start');
-
-    Route::get('/practice/attempts/{attempt}', [PracticeController::class, 'showAttempt'])->name('student.attempts.show');
-    Route::post('/practice/attempts/{attempt}/submit', [PracticeController::class, 'submit'])->name('student.attempts.submit');
-    Route::get('/practice/attempts/{attempt}/result', [PracticeController::class, 'result'])->name('student.attempts.result');
-    Route::get('/practice/history', [PracticeController::class, 'history'])->name('student.attempts.history');
+    Route::get('/papers', [StudentPaperController::class, 'index'])->name('student.papers.index');
+    Route::post('/papers/{examPaper}/start', [StudentPaperController::class, 'start'])->name('student.papers.start');
+    Route::get('/papers/attempts/{paperAttempt}', [StudentPaperController::class, 'showAttempt'])->name('student.papers.attempts.show');
+    Route::post('/papers/attempts/{paperAttempt}/submit', [StudentPaperController::class, 'submit'])->name('student.papers.attempts.submit');
+    Route::get('/papers/attempts/{paperAttempt}/result', [StudentPaperController::class, 'result'])->name('student.papers.attempts.result');
+    Route::get('/papers/history', [StudentPaperController::class, 'history'])->name('student.papers.history');
 
     Route::get('/wrong-book', [WrongBookController::class, 'index'])->name('student.wrong-book');
     Route::get('/wrong-book/review', [WrongBookController::class, 'reviewForm'])->name('student.wrong-book.review');
     Route::post('/wrong-book/review/start', [WrongBookController::class, 'startReview'])->name('student.wrong-book.review.start');
     Route::post('/wrong-book/{userWrongQuestion}/master', [WrongBookController::class, 'master'])->name('student.wrong-book.master');
+
+    Route::get('/wrong-book/attempt/{paperAttempt}', [WrongBookController::class, 'showAttempt'])->name('student.wrong-book.attempt.show');
+    Route::post('/wrong-book/attempt/{paperAttempt}/submit', [WrongBookController::class, 'submit'])->name('student.wrong-book.attempt.submit');
+    Route::get('/wrong-book/attempt/{paperAttempt}/result', [WrongBookController::class, 'result'])->name('student.wrong-book.attempt.result');
 
     Route::get('/profile', [StudentProfileController::class, 'edit'])->name('student.profile.edit');
     Route::put('/profile', [StudentProfileController::class, 'update'])->name('student.profile.update');
@@ -107,6 +111,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     ]);
     Route::post('/students/{user}/approve', [AdminUserController::class, 'approve'])->name('users.approve');
     Route::post('/students/{user}/reject', [AdminUserController::class, 'reject'])->name('users.reject');
+
+    Route::get('/papers/{paper}/stats', [AdminPaperController::class, 'stats'])->name('papers.stats');
+    Route::get('/papers/attempt/{paperAttempt}/result', [AdminPaperController::class, 'attemptResult'])->name('papers.attempt.result');
+    Route::get('/papers/{paper}/questions', [AdminPaperController::class, 'questions'])->name('papers.questions');
+    Route::get('/papers/{paper}/questions/search', [AdminPaperController::class, 'searchQuestions'])->name('papers.questions.search');
+    Route::post('/papers/{paper}/questions', [AdminPaperController::class, 'addQuestions'])->name('papers.questions.add');
+    Route::delete('/papers/{paper}/questions/{question}', [AdminPaperController::class, 'removeQuestion'])->name('papers.questions.remove');
+    Route::resource('papers', AdminPaperController::class)->except(['show']);
 
     Route::get('/logs', [AdminLogController::class, 'index'])->name('logs.index');
 

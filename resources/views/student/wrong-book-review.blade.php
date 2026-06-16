@@ -45,7 +45,7 @@
                                 <td><strong>{{ $cat->name }}</strong></td>
                                 <td>{{ $cat->wrong_questions_count }}</td>
                                 <td style="text-align:right;">
-                                    @if($cat->wrong_count > 0)
+                                    @if($cat->wrong_questions_count > 0)
                                         <form method="POST" action="{{ route('student.wrong-book.review.start') }}" style="display:inline;">
                                             @csrf
                                             <input type="hidden" name="category_id" value="{{ $cat->id }}">

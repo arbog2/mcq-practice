@@ -67,6 +67,7 @@
                         <th>题库分类</th>
                         <th>题目 ID</th>
                         <th>题干摘要</th>
+                        <th>来源</th>
                         <th style="text-align:right;">错误次数</th>
                     </tr>
                 </thead>
@@ -89,11 +90,12 @@
                             <td>{{ $row->category_name }}</td>
                             <td>{{ $row->question_id }}</td>
                             <td style="max-width:520px;">{{ $stemPreview }}</td>
+                            <td>{{ $row->sources ?? '—' }}</td>
                             <td style="text-align:right;"><strong>{{ $row->wrong_events }}</strong></td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="muted">暂无数据（或筛选条件下没有错题记录）。</td>
+                            <td colspan="6" class="muted">暂无数据（或筛选条件下没有错题记录）。</td>
                         </tr>
                     @endforelse
                 </tbody>

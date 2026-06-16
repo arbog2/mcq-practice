@@ -10,7 +10,7 @@ class QuestionHelper
 {
     private const LABELS = ['A', 'B', 'C', 'D'];
 
-    public static function shuffledOptions(PracticeAttempt $attempt, Question $question): Collection
+    public static function shuffledOptions($attempt, Question $question): Collection
     {
         $seed = crc32($attempt->id.'-'.$question->id);
         return $question->options->shuffle($seed)->values();

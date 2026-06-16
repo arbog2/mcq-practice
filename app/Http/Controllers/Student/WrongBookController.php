@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\PaperAttempt;
 use App\Models\Setting;
 use App\Models\UserWrongQuestion;
-use App\Services\PracticeService;
+use App\Services\PaperService;
 use Illuminate\Http\Request;
 
 class WrongBookController extends Controller
 {
     public function __construct(
-        private PracticeService $practiceService
+        private PaperService $paperService
     ) {}
 
     public function index(Request $request)
@@ -48,7 +49,7 @@ class WrongBookController extends Controller
 
         $userWrongQuestion->update(['mastered_at' => now()]);
 
-        return redirect()->back()->with('status', __('已标记为掌握。'));
+        return redirect()->back()->with('status', '已标记为掌握。');
     }
 
     public function reviewForm()
@@ -102,10 +103,69 @@ class WrongBookController extends Controller
         }
 
         $questionIds = $wrongs->pluck('question_id');
-        $categoryId = $validated['category_id'] ?? $wrongs->first()->category_id;
 
-        $attempt = $this->practiceService->startPracticeWithQuestions($categoryId, $userId, $questionIds);
+        $attempt = $this->paperService->startWrongBookReview($userId, $questionIds);
 
-        return redirect()->route('student.attempts.show', $attempt);
+        return redirect()->route('student.wrong-book.attempt.show', $attempt);
+    }
+
+    public function showAttempt(PaperAttempt $paperAttempt)
+    {
+        $this->authorizeAttempt($paperAttempt);
+
+        if ($paperAttempt->status !== PaperAttempt::STATUS_IN_PROGRESS) {
+            return redirect()->route('student.wrong-book.attempt.result', $paperAttempt);
+        }
+
+        $paperAttempt->load('questions.options');
+        $questions = $paperAttempt->questions;
+
+        return view('student.wrong-book-attempt', compact('paperAttempt', 'questions'));
+    }
+
+    public function submit(Request $request, PaperAttempt $paperAttempt)
+    {
+        $this->authorizeAttempt($paperAttempt);
+
+        if ($paperAttempt->status !== PaperAttempt::STATUS_IN_PROGRESS) {
+            return redirect()->route('student.wrong-book.attempt.result', $paperAttempt);
+        }
+
+        $paperAttempt->load('questions.options');
+
+        $rules = ['answers' => ['required', 'array']];
+        foreach ($paperAttempt->questions as $question) {
+            $rules['answers.'.$question->id] = ['nullable', 'integer', 'exists:question_options,id'];
+        }
+
+        $validated = $request->validate($rules);
+
+        try {
+            $this->paperService->submitPaper($paperAttempt, $validated['answers']);
+            return redirect()->route('student.wrong-book.attempt.result', $paperAttempt);
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function result(PaperAttempt $paperAttempt)
+    {
+        $this->authorizeAttempt($paperAttempt);
+
+        if ($paperAttempt->status !== PaperAttempt::STATUS_SUBMITTED) {
+            return redirect()->route('student.wrong-book.attempt.show', $paperAttempt);
+        }
+
+        $paperAttempt->load([
+            'questions.options',
+            'answers.selectedOption',
+        ]);
+
+        return view('student.wrong-book-result', compact('paperAttempt'));
+    }
+
+    private function authorizeAttempt(PaperAttempt $attempt): void
+    {
+        abort_if($attempt->user_id !== auth()->id(), 403);
     }
 }

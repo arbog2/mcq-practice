@@ -2,95 +2,74 @@
 
 namespace App\Services;
 
-use App\Models\Category;
-use App\Models\PracticeAttempt;
-use App\Models\PracticeAttemptAnswer;
+use App\Models\ExamPaper;
+use App\Models\PaperAttempt;
+use App\Models\PaperAttemptAnswer;
 use App\Models\Question;
-use App\Models\Setting;
 use App\Models\UserWrongQuestion;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class PracticeService
+class PaperService
 {
-    public function startPractice(Category $category, int $userId): PracticeAttempt
+    public function startPaper(ExamPaper $paper, int $userId): PaperAttempt
     {
-        $perSession = max(1, (int) Setting::get('questions_per_session', config('practice.questions_per_session')));
-
-        $questions = Question::query()
-            ->where('category_id', $category->id)
-            ->where('is_active', true)
-            ->inRandomOrder()
-            ->limit($perSession)
-            ->get(['id', 'score']);
+        $questions = $paper->questions()->where('questions.is_active', true)->get(['questions.id', 'score']);
 
         if ($questions->isEmpty()) {
-            throw new \RuntimeException('该分类下暂无可用题目。');
+            throw new \RuntimeException('该试卷暂无可用题目。');
         }
 
         $totalScore = $questions->sum('score');
 
-        return DB::transaction(function () use ($questions, $totalScore, $category, $userId) {
-            $attempt = PracticeAttempt::create([
+        return DB::transaction(function () use ($questions, $totalScore, $paper, $userId) {
+            $attempt = PaperAttempt::create([
+                'exam_paper_id' => $paper->id,
                 'user_id' => $userId,
-                'category_id' => $category->id,
                 'question_count' => $questions->count(),
                 'correct_count' => 0,
                 'score' => 0,
                 'total_score' => $totalScore,
-                'status' => PracticeAttempt::STATUS_IN_PROGRESS,
+                'status' => PaperAttempt::STATUS_IN_PROGRESS,
+                'source' => PaperAttempt::SOURCE_PAPER,
                 'started_at' => now(),
             ]);
 
-            $order = 1;
-            foreach ($questions as $question) {
-                $attempt->questions()->attach($question->id, [
-                    'display_order' => $order,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $order++;
-            }
+            $this->attachQuestions($attempt, $questions);
 
             return $attempt;
         });
     }
 
-    public function startPracticeWithQuestions(int $categoryId, int $userId, $questionIds): PracticeAttempt
+    public function startWrongBookReview(int $userId, Collection $questionIds): PaperAttempt
     {
         if ($questionIds->isEmpty()) {
-            throw new \RuntimeException('没有可用的题目。');
+            throw new \RuntimeException('没有可用的错题。');
         }
 
         $questions = Question::whereIn('id', $questionIds)->get(['id', 'score']);
         $totalScore = $questions->sum('score');
 
-        return DB::transaction(function () use ($questions, $totalScore, $categoryId, $userId) {
-            $attempt = PracticeAttempt::create([
+        return DB::transaction(function () use ($questions, $totalScore, $userId) {
+            $attempt = PaperAttempt::create([
+                'exam_paper_id' => null,
                 'user_id' => $userId,
-                'category_id' => $categoryId,
                 'question_count' => $questions->count(),
                 'correct_count' => 0,
                 'score' => 0,
                 'total_score' => $totalScore,
-                'status' => PracticeAttempt::STATUS_IN_PROGRESS,
+                'status' => PaperAttempt::STATUS_IN_PROGRESS,
+                'source' => PaperAttempt::SOURCE_WRONG_BOOK,
                 'started_at' => now(),
             ]);
 
-            $order = 1;
-            foreach ($questions as $question) {
-                $attempt->questions()->attach($question->id, [
-                    'display_order' => $order,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-                $order++;
-            }
+            $this->attachQuestions($attempt, $questions);
 
             return $attempt;
         });
     }
 
-    public function submitPractice(PracticeAttempt $attempt, array $answers): array
+    public function submitPaper(PaperAttempt $attempt, array $answers): array
     {
         try {
             return DB::transaction(function () use ($attempt, $answers) {
@@ -110,9 +89,9 @@ class PracticeService
                         $correctScore += ($question->score ?? 1);
                     }
 
-                    PracticeAttemptAnswer::updateOrCreate(
+                    PaperAttemptAnswer::updateOrCreate(
                         [
-                            'practice_attempt_id' => $attempt->id,
+                            'paper_attempt_id' => $attempt->id,
                             'question_id' => $question->id,
                         ],
                         [
@@ -138,20 +117,36 @@ class PracticeService
                     }
                 }
 
-                $total = $attempt->question_count ?: $attempt->questions->count();
-
                 $attempt->update([
                     'correct_count' => $correct,
                     'score' => $correctScore,
-                    'status' => PracticeAttempt::STATUS_SUBMITTED,
+                    'status' => PaperAttempt::STATUS_SUBMITTED,
                     'submitted_at' => now(),
                 ]);
 
-                return ['correct' => $correct, 'total' => $total, 'score' => $correctScore, 'total_score' => $attempt->total_score];
+                return [
+                    'correct' => $correct,
+                    'total' => $attempt->question_count,
+                    'score' => $correctScore,
+                    'total_score' => $attempt->total_score,
+                ];
             });
         } catch (\Throwable $e) {
             report($e);
             throw new \RuntimeException('提交失败，请重试。', 0, $e);
+        }
+    }
+
+    private function attachQuestions(PaperAttempt $attempt, Collection $questions): void
+    {
+        $order = 1;
+        foreach ($questions as $question) {
+            $attempt->questions()->attach($question->id, [
+                'display_order' => $order,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            $order++;
         }
     }
 }

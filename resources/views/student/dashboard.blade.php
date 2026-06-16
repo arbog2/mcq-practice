@@ -14,13 +14,9 @@
         <p class="muted">选择下方入口开始练习，或在完成后查看错题本巩固薄弱点。</p>
 
         <div class="row">
-            <a class="btn btn-primary" href="{{ route('student.categories') }}">选择分类开始练习</a>
+            <a class="btn btn-primary" href="{{ route('student.papers.index') }}">试卷练习</a>
             <a class="btn" href="{{ route('student.wrong-book') }}">错题本</a>
-            <a class="btn" href="{{ route('student.attempts.history') }}">练习历史</a>
-        </div>
-
-        <div class="muted">
-            每次题量：{{ $settings['questions_per_session'] }} 题（可在后台"系统设置"调整）。
+            <a class="btn" href="{{ route('student.papers.history') }}">练习历史</a>
         </div>
     </div>
 @endsection

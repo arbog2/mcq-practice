@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', '练习作答')
+@section('title', '试卷作答')
 
 @section('content')
     <div class="stack">
         <div class="card row" style="justify-content:space-between;align-items:center;">
             <div>
-                <h1 style="margin:0;">练习：{{ $attempt->category->name }}</h1>
+                <h1 style="margin:0;">{{ $paperAttempt->paper?->title ?? '练习' }}</h1>
                 <p class="muted" style="margin:4px 0 0;">共 {{ $questions->count() }} 题，选项顺序已打乱。</p>
             </div>
             <label class="row" style="gap:8px;align-items:center;">
@@ -18,7 +18,7 @@
             </label>
         </div>
 
-        <form method="POST" action="{{ route('student.attempts.submit', $attempt) }}" class="stack" id="attempt-form">
+        <form method="POST" action="{{ route('student.papers.attempts.submit', $paperAttempt) }}" class="stack" id="attempt-form">
             @csrf
 
             <div id="questions-container">
@@ -26,7 +26,7 @@
 
                 @foreach ($questions as $index => $question)
                     @php
-                        $shuffled = \App\Helpers\QuestionHelper::shuffledOptions($attempt, $question);
+                        $shuffled = \App\Helpers\QuestionHelper::shuffledOptions($paperAttempt, $question);
                     @endphp
                     <div class="card stack question-card" data-index="{{ $index }}">
                         <div><span class="pill">第 {{ $index + 1 }} / {{ $qTotal }} 题</span> <span class="muted" style="font-size:0.85em;">{{ $question->score ?? 1 }} 分</span></div>

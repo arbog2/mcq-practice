@@ -154,6 +154,7 @@
                             <a href="{{ route('admin.categories.index') }}">题库分类</a>
                         @endif
                         <a href="{{ route('admin.questions.index') }}">题库</a>
+                        <a href="{{ route('admin.papers.index') }}">试卷</a>
                         @if(auth()->user()->canManageUsers())
                             <a href="{{ route('admin.users.index') }}">学员</a>
                         @endif
@@ -178,8 +179,8 @@
                 @else
             <nav class="nav">
                         <a href="{{ route('student.dashboard') }}">学员首页</a>
-                        <a href="{{ route('student.categories') }}">开始练习</a>
-                        <a href="{{ route('student.attempts.history') }}">练习历史</a>
+                        <a href="{{ route('student.papers.index') }}">试卷练习</a>
+                        <a href="{{ route('student.papers.history') }}">练习历史</a>
                         <a href="{{ route('student.wrong-book') }}">错题本</a>
                         <a href="{{ route('student.profile.edit') }}">个人资料</a>
                 <span class="muted">{{ auth()->user()->name }}</span>

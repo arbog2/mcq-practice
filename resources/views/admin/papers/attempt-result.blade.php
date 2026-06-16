@@ -1,31 +1,32 @@
 @extends('layouts.app')
 
-@section('title', '练习结果')
+@section('title', '学员答卷 - ' . ($paperAttempt->paper?->title ?? '练习'))
 
 @section('content')
     @php
-        $answersByQuestionId = $attempt->answers->keyBy('question_id');
+        $answersByQuestionId = $paperAttempt->answers->keyBy('question_id');
     @endphp
 
     <div class="stack">
         <div class="card stack">
-            <h1>练习结果</h1>
+            <h1>{{ $paperAttempt->paper?->title ?? '练习' }} — 学员答卷</h1>
             <p class="muted">
-                分类：{{ $attempt->category->name }}；
-                得分：<strong>{{ $attempt->score }}</strong> / {{ $attempt->total_score }} 分（正确 {{ $attempt->correct_count }} / {{ $attempt->question_count }}）
+                学员：<strong>{{ $paperAttempt->user?->name ?? '—' }}</strong>
+                · 得分：<strong>{{ $paperAttempt->score }}</strong> / {{ $paperAttempt->total_score }} 分
+                （正确 {{ $paperAttempt->correct_count }} / {{ $paperAttempt->question_count }}）
             </p>
             <div class="row">
-                <a class="btn btn-primary" href="{{ route('student.categories') }}">继续练习</a>
-                <a class="btn" href="{{ route('student.wrong-book') }}">查看错题本</a>
+                <a class="btn btn-primary" href="{{ route('admin.papers.stats', $paperAttempt->exam_paper_id) }}">← 返回成绩统计</a>
+                <a class="btn" href="{{ route('admin.papers.index') }}">试卷列表</a>
             </div>
         </div>
 
-        @foreach ($attempt->questions as $index => $question)
+        @foreach ($paperAttempt->questions as $index => $question)
             @php
                 $answer = $answersByQuestionId->get($question->id);
                 $selected = $answer?->selectedOption;
                 $correct = $question->options->firstWhere('is_correct', true);
-                $shuffled = \App\Helpers\QuestionHelper::shuffledOptions($attempt, $question);
+                $shuffled = \App\Helpers\QuestionHelper::shuffledOptions($paperAttempt, $question);
                 $selectedLabel = \App\Helpers\QuestionHelper::labelForOption($shuffled, $selected?->id);
                 $correctLabel = \App\Helpers\QuestionHelper::labelForOption($shuffled, $correct?->id);
             @endphp
@@ -51,7 +52,7 @@
                 </div>
 
                 <div class="muted">
-                    你的选择：
+                    学员选择：
                     @if($selected)
                         <span class="rich-text"><strong>{{ $selectedLabel }}.</strong> {!! $selected->content !!}</span>
                     @else
