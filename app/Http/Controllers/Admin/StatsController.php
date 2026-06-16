@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\OrganizationUnit;
+use App\Models\PaperAttempt;
 use App\Models\User;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -113,7 +114,7 @@ class StatsController extends Controller
         $organizationUnitId = $request->query('organization_unit_id');
         $categoryId = $request->query('category_id');
 
-        $sub = DB::table('practice_attempt_answers as paa')
+        $sub1 = DB::table('practice_attempt_answers as paa')
             ->join('practice_attempts as pa', 'pa.id', '=', 'paa.practice_attempt_id')
             ->where('paa.is_correct', false)
             ->where('pa.status', PaperAttempt::STATUS_SUBMITTED)
@@ -133,10 +134,9 @@ class StatsController extends Controller
                 DB::raw("'试卷练习' as source"),
             ]);
 
-        $union = $sub->unionAll($sub2);
-
-        $query = DB::table(DB::raw("({$union->toSql()}) as wrongs"))
-            ->mergeBindings($union)
+        $query = DB::table(DB::raw("({$sub1->toSql()} UNION ALL {$sub2->toSql()}) as wrongs"))
+            ->mergeBindings($sub1)
+            ->mergeBindings($sub2)
             ->join('users as u', 'u.id', '=', 'wrongs.user_id')
             ->leftJoin('organization_units as ou', 'ou.id', '=', 'u.organization_unit_id')
             ->leftJoin('organization_units as parent', 'parent.id', '=', 'ou.parent_id')
