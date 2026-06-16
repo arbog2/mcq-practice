@@ -43,6 +43,11 @@
             </form>
         </div>
 
+        <div class="card row" style="justify-content:space-between;">
+            <div class="muted">共 {{ $attempts->total() }} 条作答记录。</div>
+            <a class="btn btn-primary" href="{{ route('admin.papers.stats.export', array_merge([$examPaper->id], request()->only('organization_unit_id'))) }}">导出 CSV</a>
+        </div>
+
         <div class="card">
             <table>
                 <thead>

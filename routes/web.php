@@ -113,6 +113,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/students/{user}/reject', [AdminUserController::class, 'reject'])->name('users.reject');
 
     Route::get('/papers/{paper}/stats', [AdminPaperController::class, 'stats'])->name('papers.stats');
+    Route::get('/papers/{paper}/stats/export', [AdminPaperController::class, 'exportStats'])->name('papers.stats.export');
     Route::get('/papers/attempt/{paperAttempt}/result', [AdminPaperController::class, 'attemptResult'])->name('papers.attempt.result');
     Route::get('/papers/{paper}/questions', [AdminPaperController::class, 'questions'])->name('papers.questions');
     Route::get('/papers/{paper}/questions/search', [AdminPaperController::class, 'searchQuestions'])->name('papers.questions.search');

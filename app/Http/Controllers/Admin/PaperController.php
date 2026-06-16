@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ExamPaper;
+use App\Models\OrganizationUnit;
 use App\Models\PaperAttempt;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PaperController extends Controller
 {
@@ -165,6 +167,64 @@ class PaperController extends Controller
         });
 
         return response()->json(['success' => true]);
+    }
+
+    public function exportStats(Request $request, ExamPaper $paper): StreamedResponse
+    {
+        $orgUnitId = $request->query('organization_unit_id');
+
+        $query = PaperAttempt::query()
+            ->where('exam_paper_id', $paper->id)
+            ->where('status', PaperAttempt::STATUS_SUBMITTED)
+            ->with('user.organizationUnit.parent')
+            ->orderByDesc('submitted_at');
+
+        if ($orgUnitId === '__none__') {
+            $query->whereHas('user', fn ($q) => $q->whereNull('organization_unit_id'));
+        } elseif ($orgUnitId) {
+            $orgUnit = OrganizationUnit::find($orgUnitId);
+            if ($orgUnit && $orgUnit->isRoot()) {
+                $leafIds = $orgUnit->children()->pluck('id');
+                $query->whereHas('user', fn ($q) => $q->whereIn('organization_unit_id', $leafIds));
+            } elseif ($orgUnit) {
+                $query->whereHas('user', fn ($q) => $q->where('organization_unit_id', $orgUnitId));
+            }
+        }
+
+        $rows = $query->get();
+        $safeTitle = preg_replace('/[\/\\\\?%*:|"<>]/', '_', $paper->title);
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'user_id', '用户', '一级分类', '二级分类', '得分', '总分', '正确数', '总题数', '用时(秒)', '提交时间',
+            ]);
+
+            foreach ($rows as $attempt) {
+                $org = $attempt->user?->organizationUnit;
+                $level1 = $org?->parent?->name ?? '';
+                $level2 = $org?->name ?? ($org ? '' : '');
+                $orgLabel = $org ? ($level1 ? $level1.$level2 : $level2) : '未绑定用户分类';
+
+                fputcsv($out, [
+                    $attempt->user_id,
+                    $attempt->user?->name ?? '',
+                    $org ? ($level1 ?: ($org->isLeaf() ? '' : $level2)) : '',
+                    $org && $org->isLeaf() ? $level2 : '',
+                    $attempt->score,
+                    $attempt->total_score,
+                    $attempt->correct_count,
+                    $attempt->question_count,
+                    $attempt->duration_seconds ?? '',
+                    $attempt->submitted_at?->format('Y-m-d H:i:s') ?? '',
+                ]);
+            }
+
+            fclose($out);
+        }, "paper-stats-{$safeTitle}.csv", [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function attemptResult(PaperAttempt $paperAttempt)
