@@ -6,6 +6,7 @@ use App\Models\OrganizationUnit;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -19,6 +20,8 @@ class UsersImport implements ToCollection, WithHeadingRow
     {
         $errors = [];
         $usersData = [];
+
+        DB::transaction(function () use ($rows, &$errors, &$usersData) {
 
         // -- Pre-load existing emails into a map: email => username --
         $fileEmails = [];
@@ -181,5 +184,7 @@ class UsersImport implements ToCollection, WithHeadingRow
         }
 
         Cache::put('import_progress_'.$userId, ['total' => $total, 'current' => $processed, 'completed' => true], 600);
+
+        });
     }
 }
