@@ -24,8 +24,8 @@ class AdminManagementController extends Controller
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
 
         $nameSearch = trim((string) $request->query('name', ''));
-        $perPage = (int) $request->query('per_page', 10);
-        $perPage = in_array($perPage, [10, 20, 50, 80, 100]) ? $perPage : (int) config('practice.pagination.users', 20);
+        $perPage = (int) $request->query('per_page', config('practice.pagination.users', 20));
+        $perPage = in_array($perPage, config('practice.per_page_options')) ? $perPage : (int) config('practice.pagination.users', 20);
 
         $query = User::query()
             ->whereIn('role', [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])

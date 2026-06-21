@@ -11,7 +11,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        abort_unless(auth()->user()?->isSuperAdmin(), 403);
+        $this->authorize('viewAny', Category::class);
 
         $categories = Category::query()
             ->orderBy('sort_order')
@@ -32,6 +32,7 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Category::class);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
@@ -51,6 +52,7 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
+        $this->authorize('update', $category);
         return view('admin.categories.form', [
             'category' => $category,
             'action' => route('admin.categories.update', $category),
@@ -60,6 +62,7 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+        $this->authorize('update', $category);
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255'],
@@ -79,6 +82,7 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        $this->authorize('delete', $category);
         $category->delete();
 
         return response()->json(['message' => '分类已删除。', 'reload' => true]);
@@ -86,6 +90,7 @@ class CategoryController extends Controller
 
     public function toggleActive(Category $category)
     {
+        $this->authorize('update', $category);
         $category->update([
             'is_active' => ! $category->is_active,
         ]);

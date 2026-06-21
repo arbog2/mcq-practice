@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class EditorUploadController extends Controller
 {
@@ -15,8 +16,8 @@ class EditorUploadController extends Controller
         ]);
 
         $file = $request->file('file');
-        $extension = $file->getClientOriginalExtension();
-        $filename = time() . '_' . uniqid() . '.' . $extension;
+        $extension = $file->guessExtension();
+        $filename = Str::random(40) . '.' . $extension;
         
         $path = $file->storeAs('editor-images', $filename, 'public');
         

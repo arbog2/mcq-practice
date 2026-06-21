@@ -3,7 +3,6 @@
 @section('title', '学员管理')
 
 @section('content')
-@php $filterBase = request()->except(['page', 'approval_status']); @endphp
 
     <div class="stack">
         <div class="card row" style="justify-content:space-between; align-items:flex-end;">

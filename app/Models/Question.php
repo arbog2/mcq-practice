@@ -39,6 +39,6 @@ class Question extends Model
 
     public function correctOption(): ?QuestionOption
     {
-        return $this->options()->where('is_correct', true)->first();
+        return $this->options->firstWhere('is_correct', true);
     }
 }

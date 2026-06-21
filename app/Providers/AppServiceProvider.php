@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Category;
+use App\Models\ExamPaper;
+use App\Models\Question;
 use App\Models\Setting;
 use App\Models\User;
+use App\Policies\CategoryPolicy;
+use App\Policies\ExamPaperPolicy;
+use App\Policies\QuestionPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Pagination\Paginator;
@@ -22,7 +28,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::defaultView('pagination::bootstrap-5');
 
-        Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(User::class, UserPolicy::class)
+            ->policy(Question::class, QuestionPolicy::class)
+            ->policy(Category::class, CategoryPolicy::class)
+            ->policy(ExamPaper::class, ExamPaperPolicy::class);
 
         RedirectIfAuthenticated::redirectUsing(function () {
             $user = auth()->user();

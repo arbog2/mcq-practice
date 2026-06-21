@@ -134,9 +134,10 @@ class StatsController extends Controller
                 DB::raw("'试卷练习' as source"),
             ]);
 
+        // WARNING: UNION subquery order below must match binding order in the array
+        $allBindings = array_merge($sub1->getBindings(), $sub2->getBindings());
         $query = DB::table(DB::raw("({$sub1->toSql()} UNION ALL {$sub2->toSql()}) as wrongs"))
-            ->mergeBindings($sub1)
-            ->mergeBindings($sub2)
+            ->setBindings($allBindings)
             ->join('users as u', 'u.id', '=', 'wrongs.user_id')
             ->leftJoin('organization_units as ou', 'ou.id', '=', 'u.organization_unit_id')
             ->leftJoin('organization_units as parent', 'parent.id', '=', 'ou.parent_id')

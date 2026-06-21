@@ -1,7 +1,7 @@
 <form method="post" action="{{ $action }}" id="question-form" novalidate>
     @csrf
     @if($method === 'PUT')
-    <input type="hidden" name="_method" value="PUT">
+    @method('PUT')
     @endif
     <div class="stack">
         <label>分类<select name="category_id" required>

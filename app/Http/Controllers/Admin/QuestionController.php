@@ -19,7 +19,7 @@ class QuestionController extends Controller
         $categoryId = $request->query('category_id');
         $keyword = $request->query('keyword');
         $perPage = (int) $request->query('per_page', config('practice.pagination.questions', 10));
-        $perPage = in_array($perPage, [10, 20, 50, 80, 100]) ? $perPage : (int) config('practice.pagination.questions', 10);
+        $perPage = in_array($perPage, config('practice.per_page_options')) ? $perPage : (int) config('practice.pagination.questions', 10);
         $query = Question::query()->with('category')->orderByDesc('id');
         if ($categoryId) {
             $query->where('category_id', $categoryId);
@@ -34,6 +34,7 @@ class QuestionController extends Controller
 
     public function create(Request $request)
     {
+        $this->authorize('create', Question::class);
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
         return view('admin.questions.form', [
             'question' => null,
@@ -77,6 +78,7 @@ class QuestionController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Question::class);
         $validated = $request->validate($this->questionRules());
         $options = $this->buildOptionsData($validated);
 
@@ -108,6 +110,7 @@ class QuestionController extends Controller
 
     public function edit(Question $question)
     {
+        $this->authorize('update', $question);
         $question->load('options');
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
         return view('admin.questions.form', [
@@ -121,6 +124,7 @@ class QuestionController extends Controller
 
     public function update(Request $request, Question $question)
     {
+        $this->authorize('update', $question);
         $validated = $request->validate($this->questionRules());
         $options = $this->buildOptionsData($validated);
 
@@ -149,6 +153,7 @@ class QuestionController extends Controller
 
     public function destroy(Question $question)
     {
+        $this->authorize('delete', $question);
         Log::record('删除题目', 'question', '删除题目 ID：'.$question->id);
         $question->delete();
         return response()->json(['message' => '题目已删除。', 'reload' => true]);
@@ -156,12 +161,14 @@ class QuestionController extends Controller
 
     public function moveForm(Question $question)
     {
+        $this->authorize('update', $question);
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
         return view('admin.questions.move-form', compact('question', 'categories'));
     }
 
     public function moveCategory(Request $request, Question $question)
     {
+        $this->authorize('update', $question);
         $validated = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
         ]);
@@ -173,6 +180,7 @@ class QuestionController extends Controller
 
     public function batchMoveCategory(Request $request)
     {
+        $this->authorize('create', Question::class);
         $validated = $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['exists:questions,id'],
@@ -185,6 +193,7 @@ class QuestionController extends Controller
 
     public function batchDestroy(Request $request)
     {
+        $this->authorize('create', Question::class);
         $validated = $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['exists:questions,id'],
@@ -196,6 +205,7 @@ class QuestionController extends Controller
 
     public function batchScore(Request $request)
     {
+        $this->authorize('create', Question::class);
         $validated = $request->validate([
             'ids' => ['required', 'array'],
             'ids.*' => ['exists:questions,id'],
@@ -208,12 +218,14 @@ class QuestionController extends Controller
 
     public function importForm()
     {
+        $this->authorize('create', Question::class);
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
         return view('admin.questions.import', compact('categories'));
     }
 
     public function importStore(Request $request)
     {
+        $this->authorize('create', Question::class);
         $request->validate(['file' => ['required', 'file', 'mimes:xlsx,xls,csv']]);
         try {
             Excel::import(new \App\Imports\QuestionsImport, $request->file('file'));
@@ -226,6 +238,7 @@ class QuestionController extends Controller
 
     public function importTemplate()
     {
+        $this->authorize('create', Question::class);
         return Excel::download(new \App\Exports\QuestionsImportTemplateExport, 'questions-import-template.xlsx');
     }
 }

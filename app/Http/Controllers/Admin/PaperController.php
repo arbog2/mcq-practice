@@ -15,6 +15,7 @@ class PaperController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $papers = ExamPaper::query()
             ->with('creator')
             ->withCount('questions')
@@ -26,6 +27,7 @@ class PaperController extends Controller
 
     public function create()
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $paper = null;
         $action = route('admin.papers.store');
         $method = 'POST';
@@ -35,6 +37,7 @@ class PaperController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', ExamPaper::class);
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:10000'],
@@ -53,6 +56,7 @@ class PaperController extends Controller
 
     public function edit(ExamPaper $paper)
     {
+        $this->authorize('update', $paper);
         $action = route('admin.papers.update', $paper);
         $method = 'PUT';
 
@@ -61,6 +65,7 @@ class PaperController extends Controller
 
     public function update(Request $request, ExamPaper $paper)
     {
+        $this->authorize('update', $paper);
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:200'],
             'description' => ['nullable', 'string', 'max:10000'],
@@ -79,6 +84,7 @@ class PaperController extends Controller
 
     public function destroy(ExamPaper $paper)
     {
+        $this->authorize('delete', $paper);
         $attemptCount = $paper->attempts()->count();
 
         if ($attemptCount > 0) {
@@ -93,6 +99,7 @@ class PaperController extends Controller
 
     public function questions(ExamPaper $paper)
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $examPaper = $paper->load('questions.category');
         $categories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
 
@@ -101,6 +108,7 @@ class PaperController extends Controller
 
     public function searchQuestions(Request $request, ExamPaper $paper)
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $query = Question::query()
             ->with('category')
             ->where('is_active', true);
@@ -130,6 +138,7 @@ class PaperController extends Controller
 
     public function addQuestions(Request $request, ExamPaper $paper)
     {
+        $this->authorize('update', $paper);
         $validated = $request->validate([
             'question_ids' => ['required', 'array'],
             'question_ids.*' => ['integer', 'exists:questions,id'],
@@ -159,6 +168,7 @@ class PaperController extends Controller
 
     public function removeQuestion(ExamPaper $paper, Question $question)
     {
+        $this->authorize('update', $paper);
         DB::transaction(function () use ($paper, $question) {
             $paper->questions()->detach($question->id);
             $paper->update([
@@ -171,6 +181,7 @@ class PaperController extends Controller
 
     public function exportStats(Request $request, ExamPaper $paper): StreamedResponse
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $orgUnitId = $request->query('organization_unit_id');
 
         $query = PaperAttempt::query()
@@ -229,6 +240,7 @@ class PaperController extends Controller
 
     public function attemptResult(PaperAttempt $paperAttempt)
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $paperAttempt->load([
             'user',
             'questions.options',
@@ -240,6 +252,7 @@ class PaperController extends Controller
 
     public function stats(Request $request, ExamPaper $paper)
     {
+        $this->authorize('viewAny', ExamPaper::class);
         $orgUnitId = $request->query('organization_unit_id');
 
         $query = PaperAttempt::query()

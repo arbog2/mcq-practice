@@ -31,8 +31,8 @@ class UserController extends Controller
         $orgLevel1Id = $request->query('org_level1_id');
         $orgLevel2Id = $request->query('org_level2_id');
         $nameSearch = trim((string) $request->query('name', ''));
-        $perPage = (int) $request->query('per_page', 10);
-        $perPage = in_array($perPage, [10, 20, 50, 80, 100]) ? $perPage : (int) config('practice.pagination.users', 20);
+        $perPage = (int) $request->query('per_page', config('practice.pagination.users', 20));
+        $perPage = in_array($perPage, config('practice.per_page_options')) ? $perPage : (int) config('practice.pagination.users', 20);
 
         $query = User::query()
             ->with('organizationUnit.parent')

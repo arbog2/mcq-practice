@@ -52,6 +52,8 @@
             </table>
         </div>
 
+        {{ $papers->links() }}
+
         <div>
             <a class="btn" href="{{ route('student.papers.history') }}">查看试卷练习历史</a>
         </div>

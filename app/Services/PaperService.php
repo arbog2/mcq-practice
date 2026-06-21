@@ -6,12 +6,18 @@ use App\Models\ExamPaper;
 use App\Models\PaperAttempt;
 use App\Models\PaperAttemptAnswer;
 use App\Models\Question;
-use App\Models\UserWrongQuestion;
+use App\Services\WrongBookService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class PaperService
 {
+    const DEFAULT_SCORE = 1;
+
+    public function __construct(
+        private readonly WrongBookService $wrongBookService,
+    ) {}
+
     public function startPaper(ExamPaper $paper, int $userId): PaperAttempt
     {
         $questions = $paper->questions()->where('questions.is_active', true)->get(['questions.id', 'score']);
@@ -72,10 +78,11 @@ class PaperService
     public function submitPaper(PaperAttempt $attempt, array $answers): array
     {
         try {
+            $attempt->load('questions.options');
+
             return DB::transaction(function () use ($attempt, $answers) {
                 $correct = 0;
                 $correctScore = 0;
-                $attempt->load('questions.options');
 
                 foreach ($attempt->questions as $question) {
                     $selectedId = $answers[$question->id] ?? null;
@@ -86,7 +93,7 @@ class PaperService
 
                     if ($isCorrect) {
                         $correct++;
-                        $correctScore += ($question->score ?? 1);
+                        $correctScore += ($question->score ?? self::DEFAULT_SCORE);
                     }
 
                     PaperAttemptAnswer::updateOrCreate(
@@ -101,19 +108,9 @@ class PaperService
                     );
 
                     if ($isCorrect) {
-                        UserWrongQuestion::where('user_id', $attempt->user_id)
-                            ->where('question_id', $question->id)
-                            ->whereNull('mastered_at')
-                            ->update(['mastered_at' => now()]);
+                        $this->wrongBookService->markCorrect($attempt->user_id, $question->id);
                     } else {
-                        $record = UserWrongQuestion::firstOrNew([
-                            'user_id' => $attempt->user_id,
-                            'question_id' => $question->id,
-                        ]);
-                        $record->category_id = $question->category_id;
-                        $record->wrong_count = ($record->wrong_count ?? 0) + 1;
-                        $record->last_wrong_at = now();
-                        $record->save();
+                        $this->wrongBookService->markWrong($attempt->user_id, $question->id, $question->category_id);
                     }
                 }
 
@@ -139,14 +136,14 @@ class PaperService
 
     private function attachQuestions(PaperAttempt $attempt, Collection $questions): void
     {
-        $order = 1;
-        foreach ($questions as $question) {
-            $attempt->questions()->attach($question->id, [
-                'display_order' => $order,
+        $pivotData = [];
+        foreach ($questions as $order => $question) {
+            $pivotData[$question->id] = [
+                'display_order' => $order + 1,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]);
-            $order++;
+            ];
         }
+        $attempt->questions()->attach($pivotData);
     }
 }

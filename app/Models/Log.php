@@ -27,10 +27,10 @@ class Log extends Model
         return $this->belongsTo(User::class);
     }
 
-    public static function record(string $action, string $type, ?string $description = null, ?array $payload = null): void
+    public static function record(string $action, string $type, ?string $description = null, ?array $payload = null, ?int $userId = null): void
     {
         self::create([
-            'user_id' => auth()->check() ? auth()->id() : null,
+            'user_id' => $userId ?? (auth()->check() ? auth()->id() : null),
             'action' => $action,
             'type' => $type,
             'description' => $description,

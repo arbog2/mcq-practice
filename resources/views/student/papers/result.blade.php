@@ -3,77 +3,15 @@
 @section('title', '试卷结果')
 
 @section('content')
-    @php
-        $answersByQuestionId = $paperAttempt->answers->keyBy('question_id');
-    @endphp
-
     <div class="stack">
-        <div class="card stack">
-            <h1>{{ $paperAttempt->paper?->title ?? '练习' }} — 结果</h1>
-            <p class="muted">
-                得分：<strong>{{ $paperAttempt->score }}</strong> / {{ $paperAttempt->total_score }} 分（正确 {{ $paperAttempt->correct_count }} / {{ $paperAttempt->question_count }}）
-            </p>
-            <div class="row">
-                <a class="btn btn-primary" href="{{ route('student.papers.index') }}">返回试卷列表</a>
-                <a class="btn" href="{{ route('student.papers.history') }}">练习历史</a>
-            </div>
-        </div>
-
-        @foreach ($paperAttempt->questions as $index => $question)
-            @php
-                $answer = $answersByQuestionId->get($question->id);
-                $selected = $answer?->selectedOption;
-                $correct = $question->options->firstWhere('is_correct', true);
-                $shuffled = \App\Helpers\QuestionHelper::shuffledOptions($paperAttempt, $question);
-                $selectedLabel = \App\Helpers\QuestionHelper::labelForOption($shuffled, $selected?->id);
-                $correctLabel = \App\Helpers\QuestionHelper::labelForOption($shuffled, $correct?->id);
-            @endphp
-
-            <div class="card stack">
-                <div class="row" style="justify-content:space-between;">
-                    <div><span class="pill">第 {{ $index + 1 }} 题</span></div>
-                    <div>
-                        @if($answer && $answer->is_correct)
-                            <span class="pill" style="border-color:#bbf7d0; color:#166534;">正确</span>
-                        @else
-                            <span class="pill" style="border-color:#fecaca; color:#991b1b;">错误</span>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="rich-text">{!! $question->stem !!}</div>
-
-                <div class="stack" style="gap:8px; margin:8px 0;">
-                    @foreach ($shuffled as $i => $opt)
-                        <div><span class="rich-text"><strong>{{ ['A','B','C','D'][$i] }}.</strong> {!! $opt->content !!}</span></div>
-                    @endforeach
-                </div>
-
-                <div class="muted">
-                    你的选择：
-                    @if($selected)
-                        <span class="rich-text"><strong>{{ $selectedLabel }}.</strong> {!! $selected->content !!}</span>
-                    @else
-                        <strong>未作答</strong>
-                    @endif
-                </div>
-
-                <div class="muted">
-                    正确答案：
-                    @if($correct)
-                        <span class="rich-text"><strong>{{ $correctLabel }}.</strong> {!! $correct->content !!}</span>
-                    @else
-                        —
-                    @endif
-                </div>
-
-                @if($question->explanation)
-                    <div class="card stack" style="background:#fafafa;">
-                        <div class="muted">解析</div>
-                        <div class="rich-text">{!! $question->explanation !!}</div>
-                    </div>
-                @endif
-            </div>
-        @endforeach
+        @include('partials.attempt-result', [
+            'attempt' => $paperAttempt,
+            'title' => ($paperAttempt->paper?->title ?? '练习') . ' — 结果',
+            'backRoute' => route('student.papers.index'),
+            'backText' => '返回试卷列表',
+            'isAdmin' => false,
+            'secondaryRoute' => route('student.papers.history'),
+            'secondaryText' => '练习历史',
+        ])
     </div>
 @endsection
