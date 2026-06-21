@@ -6,7 +6,6 @@ use App\Models\ExamPaper;
 use App\Models\PaperAttempt;
 use App\Models\PaperAttemptAnswer;
 use App\Models\Question;
-use App\Services\WrongBookService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -83,6 +82,10 @@ class PaperService
             return DB::transaction(function () use ($attempt, $answers) {
                 $correct = 0;
                 $correctScore = 0;
+                $answerRecords = [];
+                $correctIds = [];
+                $wrongItems = [];
+                $now = now();
 
                 foreach ($attempt->questions as $question) {
                     $selectedId = $answers[$question->id] ?? null;
@@ -94,31 +97,38 @@ class PaperService
                     if ($isCorrect) {
                         $correct++;
                         $correctScore += ($question->score ?? self::DEFAULT_SCORE);
-                    }
-
-                    PaperAttemptAnswer::updateOrCreate(
-                        [
-                            'paper_attempt_id' => $attempt->id,
-                            'question_id' => $question->id,
-                        ],
-                        [
-                            'selected_option_id' => $selectedOption?->id,
-                            'is_correct' => (bool) $isCorrect,
-                        ]
-                    );
-
-                    if ($isCorrect) {
-                        $this->wrongBookService->markCorrect($attempt->user_id, $question->id);
+                        $correctIds[] = $question->id;
                     } else {
-                        $this->wrongBookService->markWrong($attempt->user_id, $question->id, $question->category_id);
+                        $wrongItems[] = [
+                            'question_id' => $question->id,
+                            'category_id' => $question->category_id,
+                        ];
                     }
+
+                    $answerRecords[] = [
+                        'paper_attempt_id' => $attempt->id,
+                        'question_id' => $question->id,
+                        'selected_option_id' => $selectedOption?->id,
+                        'is_correct' => (bool) $isCorrect,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
                 }
+
+                PaperAttemptAnswer::upsert(
+                    $answerRecords,
+                    ['paper_attempt_id', 'question_id'],
+                    ['selected_option_id', 'is_correct', 'updated_at'],
+                );
+
+                $this->wrongBookService->batchMarkCorrect($attempt->user_id, $correctIds);
+                $this->wrongBookService->batchMarkWrong($attempt->user_id, $wrongItems);
 
                 $attempt->update([
                     'correct_count' => $correct,
                     'score' => $correctScore,
                     'status' => PaperAttempt::STATUS_SUBMITTED,
-                    'submitted_at' => now(),
+                    'submitted_at' => $now,
                 ]);
 
                 return [

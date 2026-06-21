@@ -20,7 +20,7 @@ class PaperController extends Controller
             ->where('is_active', true)
             ->withCount(['questions' => fn ($q) => $q->where('is_active', true)])
             ->orderByDesc('id')
-            ->get();
+            ->paginate(20);
 
         return view('student.papers.index', compact('papers'));
     }
@@ -33,6 +33,7 @@ class PaperController extends Controller
 
         try {
             $attempt = $this->paperService->startPaper($examPaper, auth()->id());
+
             return redirect()->route('student.papers.attempts.show', $attempt);
         } catch (\RuntimeException $e) {
             return redirect()
@@ -74,6 +75,7 @@ class PaperController extends Controller
 
         try {
             $this->paperService->submitPaper($paperAttempt, $validated['answers']);
+
             return redirect()->route('student.papers.attempts.result', $paperAttempt);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withErrors(['error' => $e->getMessage()]);

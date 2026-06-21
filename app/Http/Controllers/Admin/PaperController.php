@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\ExamPaper;
 use App\Models\OrganizationUnit;
 use App\Models\PaperAttempt;
@@ -101,7 +102,7 @@ class PaperController extends Controller
     {
         $this->authorize('viewAny', ExamPaper::class);
         $examPaper = $paper->load('questions.category');
-        $categories = \App\Models\Category::where('is_active', true)->orderBy('name')->get();
+        $categories = Category::where('is_active', true)->orderBy('name')->get();
 
         return view('admin.papers.questions', compact('examPaper', 'categories'));
     }
@@ -121,9 +122,9 @@ class PaperController extends Controller
             $keyword = $request->keyword;
             $query->where(function ($q) use ($keyword) {
                 $q->where('stem', 'like', "%{$keyword}%")
-                  ->orWhereHas('options', function ($o) use ($keyword) {
-                      $o->where('content', 'like', "%{$keyword}%");
-                  });
+                    ->orWhereHas('options', function ($o) use ($keyword) {
+                        $o->where('content', 'like', "%{$keyword}%");
+                    });
             });
         }
 
@@ -148,13 +149,13 @@ class PaperController extends Controller
 
         $attachData = [];
         foreach ($validated['question_ids'] as $id) {
-            if (!$paper->questions()->where('question_id', $id)->exists()) {
+            if (! $paper->questions()->where('question_id', $id)->exists()) {
                 $maxOrder++;
                 $attachData[$id] = ['display_order' => $maxOrder];
             }
         }
 
-        if (!empty($attachData)) {
+        if (! empty($attachData)) {
             DB::transaction(function () use ($paper, $attachData) {
                 $paper->questions()->attach($attachData);
                 $paper->update([
@@ -264,7 +265,7 @@ class PaperController extends Controller
         if ($orgUnitId === '__none__') {
             $query->whereHas('user', fn ($q) => $q->whereNull('organization_unit_id'));
         } elseif ($orgUnitId) {
-            $orgUnit = \App\Models\OrganizationUnit::find($orgUnitId);
+            $orgUnit = OrganizationUnit::find($orgUnitId);
             if ($orgUnit && $orgUnit->isRoot()) {
                 $leafIds = $orgUnit->children()->pluck('id');
                 $query->whereHas('user', fn ($q) => $q->whereIn('organization_unit_id', $leafIds));
@@ -275,13 +276,13 @@ class PaperController extends Controller
 
         $attempts = $query->paginate(20)->withQueryString();
 
-        $rootUnits = \App\Models\OrganizationUnit::query()
+        $rootUnits = OrganizationUnit::query()
             ->whereNull('parent_id')
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
-        $leafUnits = \App\Models\OrganizationUnit::query()
+        $leafUnits = OrganizationUnit::query()
             ->whereNotNull('parent_id')
             ->with('parent')
             ->orderBy('parent_id')

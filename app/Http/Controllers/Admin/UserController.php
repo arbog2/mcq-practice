@@ -11,6 +11,7 @@ use App\Models\Log;
 use App\Models\OrganizationUnit;
 use App\Models\User;
 use App\Services\UserService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
@@ -161,7 +162,7 @@ class UserController extends Controller
 
         return view('admin.users.form', [
             'user' => $user,
-            'action' => url('admin/students/' . $user->id),
+            'action' => url('admin/students/'.$user->id),
             'method' => 'PUT',
             'assignableRoles' => $assignableRoles,
             'leafOrganizationUnits' => $leafOrganizationUnits,
@@ -190,6 +191,7 @@ class UserController extends Controller
         if (request()->ajax()) {
             return response()->json(['message' => '学员已删除。', 'reload' => true]);
         }
+
         return redirect()->route('admin.users.index')->with('status', __('学员已删除。'));
     }
 
@@ -330,10 +332,11 @@ class UserController extends Controller
         }
     }
 
-    private function scopeQueryForActor(User $actor, \Illuminate\Database\Eloquent\Builder $query): void
+    private function scopeQueryForActor(User $actor, Builder $query): void
     {
         if ($actor->isSuperAdmin()) {
             $query->where('id', '!=', $actor->id);
+
             return;
         }
 

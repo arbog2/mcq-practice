@@ -90,7 +90,7 @@
                         <td>{{ \App\Models\User::roleLabels()[$user->role] ?? $user->role }}</td>
                         <td>{{ $user->approval_status }}</td>
                         <td style="text-align:right;">
-                            @if($user->role === 'student' && $user->approval_status === 'pending')
+                            @if($user->role === \App\Models\User::ROLE_STUDENT && $user->approval_status === \App\Models\User::APPROVAL_PENDING)
                             <button class="btn btn-primary" onclick="approveUser({{ $user->id }})">通过</button>
                             <button class="btn" onclick="rejectUser({{ $user->id }})">拒绝</button>
                             @endif
@@ -107,7 +107,7 @@
         <div class="row" style="justify-content:space-between;align-items:center;">
             <div class="muted">每页
                 <select id="per-page" onchange="var p=new URLSearchParams(location.search);p.set('per_page',this.value);p.delete('page');location.search=p.toString()" style="width:auto;display:inline-block;padding:4px 8px;">
-                    @foreach([10,20,50,80,100] as $n)
+                    @foreach(config('practice.per_page_options', [10,20,50,80,100]) as $n)
                         <option value="{{ $n }}" @if($perPage == $n) selected @endif>{{ $n }}</option>
                     @endforeach
                 </select>

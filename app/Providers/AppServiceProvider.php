@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Models\Category;
 use App\Models\ExamPaper;
+use App\Models\PracticeAttempt;
 use App\Models\Question;
 use App\Models\Setting;
 use App\Models\User;
 use App\Policies\CategoryPolicy;
 use App\Policies\ExamPaperPolicy;
+use App\Policies\PracticeAttemptPolicy;
 use App\Policies\QuestionPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
@@ -32,7 +34,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class)
             ->policy(Question::class, QuestionPolicy::class)
             ->policy(Category::class, CategoryPolicy::class)
-            ->policy(ExamPaper::class, ExamPaperPolicy::class);
+            ->policy(ExamPaper::class, ExamPaperPolicy::class)
+            ->policy(PracticeAttempt::class, PracticeAttemptPolicy::class);
 
         RedirectIfAuthenticated::redirectUsing(function () {
             $user = auth()->user();

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Student\UpdateProfileRequest;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 class StudentProfileController extends Controller

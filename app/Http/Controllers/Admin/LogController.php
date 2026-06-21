@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Log;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class LogController extends Controller
@@ -27,7 +28,7 @@ class LogController extends Controller
 
         $logs = $query->paginate(30)->withQueryString();
 
-        $users = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->orderBy('name')->get(['id', 'name', 'username']);
+        $users = User::whereIn('role', [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])->orderBy('name')->get(['id', 'name', 'username']);
 
         return view('admin.logs.index', compact('logs', 'type', 'users', 'userId'));
     }

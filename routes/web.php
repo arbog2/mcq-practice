@@ -1,15 +1,16 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminManagementController;
+use App\Http\Controllers\Admin\AdminProfileController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\EditorUploadController as AdminEditorUploadController;
+use App\Http\Controllers\Admin\LogController as AdminLogController;
 use App\Http\Controllers\Admin\OrganizationUnitController as AdminOrganizationUnitController;
 use App\Http\Controllers\Admin\PaperController as AdminPaperController;
 use App\Http\Controllers\Admin\QuestionController as AdminQuestionController;
-use App\Http\Controllers\Admin\LogController as AdminLogController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Admin\StatsController as AdminStatsController;
-use App\Http\Controllers\Admin\AdminManagementController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Student\PaperController as StudentPaperController;
 use App\Http\Controllers\Student\PendingApprovalController;
 use App\Http\Controllers\Student\StudentProfileController;
 use App\Http\Controllers\Student\WrongBookController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,7 +29,7 @@ Route::get('/', function () {
         return redirect()->route('login');
     }
 
-    /** @var \App\Models\User $user */
+    /** @var User $user */
     $user = auth()->user();
 
     return redirect()->route($user->isAdmin() ? 'admin.dashboard' : 'student.dashboard');
@@ -39,7 +41,7 @@ Route::middleware('guest')->group(function () {
 
     if (config('practice.registration_enabled')) {
         Route::get('register', [RegisterController::class, 'create'])->name('register');
-        Route::post('register', [RegisterController::class, 'store']);
+        Route::post('register', [RegisterController::class, 'store'])->middleware('throttle:5,1');
     }
 });
 
@@ -47,9 +49,9 @@ Route::post('logout', [LoginController::class, 'destroy'])->middleware('auth')->
 
 Route::middleware('guest')->group(function () {
     Route::get('forgot-password', [ForgotPasswordController::class, 'create'])->name('password.request');
-    Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->name('password.email');
+    Route::post('forgot-password', [ForgotPasswordController::class, 'store'])->middleware('throttle:5,1')->name('password.email');
     Route::get('reset-password/{token}', [ResetPasswordController::class, 'create'])->name('password.reset');
-    Route::post('reset-password', [ResetPasswordController::class, 'store'])->name('password.update');
+    Route::post('reset-password', [ResetPasswordController::class, 'store'])->middleware('throttle:5,1')->name('password.update');
 });
 
 Route::middleware('auth')->group(function () {
@@ -61,19 +63,19 @@ Route::middleware(['auth', 'student'])->group(function () {
     Route::get('/student', StudentDashboardController::class)->name('student.dashboard');
 
     Route::get('/papers', [StudentPaperController::class, 'index'])->name('student.papers.index');
-    Route::post('/papers/{examPaper}/start', [StudentPaperController::class, 'start'])->name('student.papers.start');
+    Route::post('/papers/{examPaper}/start', [StudentPaperController::class, 'start'])->middleware('throttle:10,1')->name('student.papers.start');
     Route::get('/papers/attempts/{paperAttempt}', [StudentPaperController::class, 'showAttempt'])->name('student.papers.attempts.show');
-    Route::post('/papers/attempts/{paperAttempt}/submit', [StudentPaperController::class, 'submit'])->name('student.papers.attempts.submit');
+    Route::post('/papers/attempts/{paperAttempt}/submit', [StudentPaperController::class, 'submit'])->middleware('throttle:10,1')->name('student.papers.attempts.submit');
     Route::get('/papers/attempts/{paperAttempt}/result', [StudentPaperController::class, 'result'])->name('student.papers.attempts.result');
     Route::get('/papers/history', [StudentPaperController::class, 'history'])->name('student.papers.history');
 
     Route::get('/wrong-book', [WrongBookController::class, 'index'])->name('student.wrong-book');
     Route::get('/wrong-book/review', [WrongBookController::class, 'reviewForm'])->name('student.wrong-book.review');
-    Route::post('/wrong-book/review/start', [WrongBookController::class, 'startReview'])->name('student.wrong-book.review.start');
-    Route::post('/wrong-book/{userWrongQuestion}/master', [WrongBookController::class, 'master'])->name('student.wrong-book.master');
+    Route::post('/wrong-book/review/start', [WrongBookController::class, 'startReview'])->middleware('throttle:10,1')->name('student.wrong-book.review.start');
+    Route::post('/wrong-book/{userWrongQuestion}/master', [WrongBookController::class, 'master'])->middleware('throttle:30,1')->name('student.wrong-book.master');
 
     Route::get('/wrong-book/attempt/{paperAttempt}', [WrongBookController::class, 'showAttempt'])->name('student.wrong-book.attempt.show');
-    Route::post('/wrong-book/attempt/{paperAttempt}/submit', [WrongBookController::class, 'submit'])->name('student.wrong-book.attempt.submit');
+    Route::post('/wrong-book/attempt/{paperAttempt}/submit', [WrongBookController::class, 'submit'])->middleware('throttle:10,1')->name('student.wrong-book.attempt.submit');
     Route::get('/wrong-book/attempt/{paperAttempt}/result', [WrongBookController::class, 'result'])->name('student.wrong-book.attempt.result');
 
     Route::get('/profile', [StudentProfileController::class, 'edit'])->name('student.profile.edit');
@@ -83,8 +85,8 @@ Route::middleware(['auth', 'student'])->group(function () {
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
 
-    Route::get('/profile', [App\Http\Controllers\Admin\AdminProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [App\Http\Controllers\Admin\AdminProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
@@ -95,11 +97,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // 学员管理
     Route::get('/students-import/template', [AdminUserController::class, 'importTemplate'])->name('users.import.template');
     Route::get('/students-import', [AdminUserController::class, 'importForm'])->name('users.import');
-    Route::post('/students-import', [AdminUserController::class, 'importStore'])->name('users.import.store');
+    Route::post('/students-import', [AdminUserController::class, 'importStore'])->middleware('throttle:5,1')->name('users.import.store');
     Route::get('/import-progress', [AdminUserController::class, 'importProgress'])->name('import.progress');
 
-    Route::post('/students/batch-move', [AdminUserController::class, 'batchMoveCategory'])->name('users.batch-move');
-    Route::post('/students/batch-destroy', [AdminUserController::class, 'batchDestroy'])->name('users.batch-destroy');
+    Route::post('/students/batch-move', [AdminUserController::class, 'batchMoveCategory'])->middleware('throttle:30,1')->name('users.batch-move');
+    Route::post('/students/batch-destroy', [AdminUserController::class, 'batchDestroy'])->middleware('throttle:30,1')->name('users.batch-destroy');
 
     Route::resource('students', AdminUserController::class)->parameter('students', 'user')->except(['show'])->names([
         'index' => 'users.index',
@@ -135,11 +137,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/questions-import/template', [AdminQuestionController::class, 'importTemplate'])->name('questions.import.template');
     Route::get('/questions-import', [AdminQuestionController::class, 'importForm'])->name('questions.import');
-    Route::post('/questions-import', [AdminQuestionController::class, 'importStore'])->name('questions.import.store');
+    Route::post('/questions-import', [AdminQuestionController::class, 'importStore'])->middleware('throttle:5,1')->name('questions.import.store');
 
-    Route::post('/questions/batch-move', [AdminQuestionController::class, 'batchMoveCategory'])->name('questions.batch-move');
-    Route::post('/questions/batch-destroy', [AdminQuestionController::class, 'batchDestroy'])->name('questions.batch-destroy');
-    Route::post('/questions/batch-score', [AdminQuestionController::class, 'batchScore'])->name('questions.batch-score');
+    Route::post('/questions/batch-move', [AdminQuestionController::class, 'batchMoveCategory'])->middleware('throttle:30,1')->name('questions.batch-move');
+    Route::post('/questions/batch-destroy', [AdminQuestionController::class, 'batchDestroy'])->middleware('throttle:30,1')->name('questions.batch-destroy');
+    Route::post('/questions/batch-score', [AdminQuestionController::class, 'batchScore'])->middleware('throttle:30,1')->name('questions.batch-score');
     Route::get('/questions/{question}/move', [AdminQuestionController::class, 'moveForm'])->name('questions.move.form');
     Route::post('/questions/{question}/move', [AdminQuestionController::class, 'moveCategory'])->name('questions.move');
     Route::resource('questions', AdminQuestionController::class)->except(['show']);

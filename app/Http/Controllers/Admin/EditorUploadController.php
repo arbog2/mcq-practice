@@ -17,10 +17,10 @@ class EditorUploadController extends Controller
 
         $file = $request->file('file');
         $extension = $file->guessExtension();
-        $filename = Str::random(40) . '.' . $extension;
-        
+        $filename = Str::random(40).'.'.$extension;
+
         $path = $file->storeAs('editor-images', $filename, 'public');
-        
+
         $url = Storage::disk('public')->url($path);
 
         return response()->json(['location' => $url]);

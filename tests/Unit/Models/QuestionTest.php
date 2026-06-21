@@ -13,7 +13,7 @@ class QuestionTest extends TestCase
     {
         $category = Category::factory()->create();
         $question = Question::factory()->create(['category_id' => $category->id]);
-        
+
         QuestionOption::factory()->create([
             'question_id' => $question->id,
             'is_correct' => false,

@@ -26,7 +26,7 @@ class CategoryController extends Controller
         return view('admin.categories.form', [
             'category' => null,
             'action' => route('admin.categories.store'),
-            'method' => 'POST'
+            'method' => 'POST',
         ]);
     }
 
@@ -42,7 +42,7 @@ class CategoryController extends Controller
 
         Category::create([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] ?: Str::slug($validated['name']),
+            'slug' => ($validated['slug'] ?? null) ?: Str::slug($validated['name']),
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -53,10 +53,11 @@ class CategoryController extends Controller
     public function edit(Category $category)
     {
         $this->authorize('update', $category);
+
         return view('admin.categories.form', [
             'category' => $category,
             'action' => route('admin.categories.update', $category),
-            'method' => 'PUT'
+            'method' => 'PUT',
         ]);
     }
 
@@ -72,7 +73,7 @@ class CategoryController extends Controller
 
         $category->update([
             'name' => $validated['name'],
-            'slug' => $validated['slug'] ?: Str::slug($validated['name']),
+            'slug' => ($validated['slug'] ?? null) ?: Str::slug($validated['name']),
             'sort_order' => $validated['sort_order'] ?? 0,
             'is_active' => $request->boolean('is_active'),
         ]);
@@ -96,7 +97,7 @@ class CategoryController extends Controller
         ]);
 
         return response()->json([
-            'message' => '分类已' . ($category->is_active ? '启用' : '禁用') . '。',
+            'message' => '分类已'.($category->is_active ? '启用' : '禁用').'。',
             'is_active' => $category->is_active,
         ]);
     }

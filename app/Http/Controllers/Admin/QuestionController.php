@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\QuestionsImportTemplateExport;
+use App\Helpers\HtmlHelper;
 use App\Http\Controllers\Controller;
+use App\Imports\QuestionsImport;
 use App\Models\Category;
 use App\Models\Log;
 use App\Models\Question;
@@ -25,10 +28,12 @@ class QuestionController extends Controller
             $query->where('category_id', $categoryId);
         }
         if ($keyword) {
-            $query->where('stem', 'like', '%'.addcslashes($keyword, '%_').'%');
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);
+            $query->where('stem', 'like', '%'.$escaped.'%');
         }
         $questions = $query->paginate($perPage)->withQueryString();
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
+
         return view('admin.questions.index', compact('questions', 'categories', 'categoryId', 'keyword', 'perPage'));
     }
 
@@ -36,6 +41,7 @@ class QuestionController extends Controller
     {
         $this->authorize('create', Question::class);
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
+
         return view('admin.questions.form', [
             'question' => null,
             'action' => route('admin.questions.store'),
@@ -69,10 +75,11 @@ class QuestionController extends Controller
         for ($i = 0; $i < 4; $i++) {
             $options[] = [
                 'label' => $labels[$i],
-                'content' => $validated['option'.$i],
+                'content' => HtmlHelper::purify($validated['option'.$i]),
                 'is_correct' => ($i === (int) $validated['correct_index']),
             ];
         }
+
         return $options;
     }
 
@@ -86,8 +93,8 @@ class QuestionController extends Controller
         DB::transaction(function () use ($validated, $options, $request, &$questionId) {
             $question = Question::create([
                 'category_id' => $validated['category_id'],
-                'stem' => $validated['stem'],
-                'explanation' => $validated['explanation'] ?? null,
+                'stem' => HtmlHelper::purify($validated['stem']),
+                'explanation' => HtmlHelper::purify($validated['explanation'] ?? null),
                 'difficulty' => $validated['difficulty'] ?? null,
                 'score' => $validated['score'] ?? 1,
                 'is_active' => $request->boolean('is_active'),
@@ -113,6 +120,7 @@ class QuestionController extends Controller
         $this->authorize('update', $question);
         $question->load('options');
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
+
         return view('admin.questions.form', [
             'question' => $question,
             'action' => route('admin.questions.update', $question),
@@ -131,8 +139,8 @@ class QuestionController extends Controller
         DB::transaction(function () use ($validated, $options, $question, $request) {
             $question->update([
                 'category_id' => $validated['category_id'],
-                'stem' => $validated['stem'],
-                'explanation' => $validated['explanation'] ?? null,
+                'stem' => HtmlHelper::purify($validated['stem']),
+                'explanation' => HtmlHelper::purify($validated['explanation'] ?? null),
                 'difficulty' => $validated['difficulty'] ?? null,
                 'score' => $validated['score'] ?? 1,
                 'is_active' => $request->boolean('is_active'),
@@ -156,6 +164,7 @@ class QuestionController extends Controller
         $this->authorize('delete', $question);
         Log::record('删除题目', 'question', '删除题目 ID：'.$question->id);
         $question->delete();
+
         return response()->json(['message' => '题目已删除。', 'reload' => true]);
     }
 
@@ -163,6 +172,7 @@ class QuestionController extends Controller
     {
         $this->authorize('update', $question);
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
+
         return view('admin.questions.move-form', compact('question', 'categories'));
     }
 
@@ -175,6 +185,7 @@ class QuestionController extends Controller
         $oldCategoryId = $question->category_id;
         $question->update(['category_id' => $validated['category_id']]);
         Log::record('转移题目', 'question', '题目 ID：'.$question->id.' 从分类 '.$oldCategoryId.' 转移到 '.$validated['category_id']);
+
         return response()->json(['message' => '分类已更新。', 'reload' => true]);
     }
 
@@ -188,6 +199,7 @@ class QuestionController extends Controller
         ]);
         $count = Question::whereIn('id', $validated['ids'])->update(['category_id' => $validated['category_id']]);
         Log::record('批量转移题目', 'question', "批量转移 {$count} 道题目到分类 {$validated['category_id']}");
+
         return response()->json(['message' => "已批量转移 {$count} 道题目。", 'reload' => true]);
     }
 
@@ -200,6 +212,7 @@ class QuestionController extends Controller
         ]);
         $count = Question::whereIn('id', $validated['ids'])->delete();
         Log::record('批量删除题目', 'question', "批量删除 {$count} 道题目");
+
         return response()->json(['message' => "已批量删除 {$count} 道题目。", 'reload' => true]);
     }
 
@@ -213,6 +226,7 @@ class QuestionController extends Controller
         ]);
         $count = Question::whereIn('id', $validated['ids'])->update(['score' => $validated['score']]);
         Log::record('批量设置分值', 'question', "批量设置 {$count} 道题目分值为 {$validated['score']}");
+
         return response()->json(['message' => "已批量设置 {$count} 道题目分值为 {$validated['score']}。", 'reload' => true]);
     }
 
@@ -220,6 +234,7 @@ class QuestionController extends Controller
     {
         $this->authorize('create', Question::class);
         $categories = Category::query()->orderBy('sort_order')->orderBy('name')->get();
+
         return view('admin.questions.import', compact('categories'));
     }
 
@@ -228,17 +243,19 @@ class QuestionController extends Controller
         $this->authorize('create', Question::class);
         $request->validate(['file' => ['required', 'file', 'mimes:xlsx,xls,csv']]);
         try {
-            Excel::import(new \App\Imports\QuestionsImport, $request->file('file'));
+            Excel::import(new QuestionsImport, $request->file('file'));
             Log::record('导入题目', 'question', '通过 Excel 导入题目');
         } catch (ValidationException $e) {
             return redirect()->back()->withErrors($e->errors());
         }
+
         return redirect()->route('admin.questions.index')->with('status', '题目导入完成。');
     }
 
     public function importTemplate()
     {
         $this->authorize('create', Question::class);
-        return Excel::download(new \App\Exports\QuestionsImportTemplateExport, 'questions-import-template.xlsx');
+
+        return Excel::download(new QuestionsImportTemplateExport, 'questions-import-template.xlsx');
     }
 }

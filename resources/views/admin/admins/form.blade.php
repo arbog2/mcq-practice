@@ -90,7 +90,7 @@
     if (!roleSelect || !managedScope) return;
 
     function toggleScope() {
-        managedScope.style.display = roleSelect.value === 'admin' ? '' : 'none';
+        managedScope.style.display = roleSelect.value === '{{ \App\Models\User::ROLE_ADMIN }}' ? '' : 'none';
     }
 
     roleSelect.addEventListener('change', toggleScope);

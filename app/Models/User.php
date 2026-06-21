@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -23,9 +23,9 @@ class User extends Authenticatable implements MustVerifyEmail
     public static function roleLabels(): array
     {
         return [
-            self::ROLE_SUPER_ADMIN => __('roles.' . self::ROLE_SUPER_ADMIN),
-            self::ROLE_ADMIN => __('roles.' . self::ROLE_ADMIN),
-            self::ROLE_STUDENT => __('roles.' . self::ROLE_STUDENT),
+            self::ROLE_SUPER_ADMIN => __('roles.'.self::ROLE_SUPER_ADMIN),
+            self::ROLE_ADMIN => __('roles.'.self::ROLE_ADMIN),
+            self::ROLE_STUDENT => __('roles.'.self::ROLE_STUDENT),
         ];
     }
 

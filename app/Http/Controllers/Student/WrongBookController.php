@@ -64,9 +64,9 @@ class WrongBookController extends Controller
             ->where('is_active', true)
             ->whereIn('id', function ($q) use ($userId) {
                 $q->select('category_id')
-                  ->from('user_wrong_questions')
-                  ->where('user_id', $userId)
-                  ->whereNull('mastered_at');
+                    ->from('user_wrong_questions')
+                    ->where('user_id', $userId)
+                    ->whereNull('mastered_at');
             })
             ->orderBy('sort_order')
             ->orderBy('name')
@@ -142,6 +142,7 @@ class WrongBookController extends Controller
 
         try {
             $this->paperService->submitPaper($paperAttempt, $validated['answers']);
+
             return redirect()->route('student.wrong-book.attempt.result', $paperAttempt);
         } catch (\RuntimeException $e) {
             return redirect()->back()->withErrors(['error' => $e->getMessage()]);

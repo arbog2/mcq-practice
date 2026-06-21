@@ -114,7 +114,7 @@ class StatsController extends Controller
         $organizationUnitId = $request->query('organization_unit_id');
         $categoryId = $request->query('category_id');
 
-        $sub1 = DB::table('practice_attempt_answers as paa')
+        $practiceWrongs = DB::table('practice_attempt_answers as paa')
             ->join('practice_attempts as pa', 'pa.id', '=', 'paa.practice_attempt_id')
             ->where('paa.is_correct', false)
             ->where('pa.status', PaperAttempt::STATUS_SUBMITTED)
@@ -124,7 +124,7 @@ class StatsController extends Controller
                 DB::raw("'分类练习' as source"),
             ]);
 
-        $sub2 = DB::table('paper_attempt_answers as paa2')
+        $paperWrongs = DB::table('paper_attempt_answers as paa2')
             ->join('paper_attempts as pa2', 'pa2.id', '=', 'paa2.paper_attempt_id')
             ->where('paa2.is_correct', false)
             ->where('pa2.status', PaperAttempt::STATUS_SUBMITTED)
@@ -134,10 +134,10 @@ class StatsController extends Controller
                 DB::raw("'试卷练习' as source"),
             ]);
 
-        // WARNING: UNION subquery order below must match binding order in the array
-        $allBindings = array_merge($sub1->getBindings(), $sub2->getBindings());
-        $query = DB::table(DB::raw("({$sub1->toSql()} UNION ALL {$sub2->toSql()}) as wrongs"))
-            ->setBindings($allBindings)
+        $union = $practiceWrongs->unionAll($paperWrongs);
+
+        $query = DB::query()
+            ->fromSub($union, 'wrongs')
             ->join('users as u', 'u.id', '=', 'wrongs.user_id')
             ->leftJoin('organization_units as ou', 'ou.id', '=', 'u.organization_unit_id')
             ->leftJoin('organization_units as parent', 'parent.id', '=', 'ou.parent_id')

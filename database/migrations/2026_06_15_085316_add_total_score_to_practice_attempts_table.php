@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -13,7 +13,9 @@ return new class extends Migration
             $table->unsignedInteger('total_score')->default(0)->after('score');
         });
 
-        DB::statement('ALTER TABLE practice_attempts MODIFY score INT UNSIGNED DEFAULT 0');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE practice_attempts MODIFY score INT UNSIGNED DEFAULT 0');
+        }
     }
 
     public function down(): void
