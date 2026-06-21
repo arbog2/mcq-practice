@@ -56,7 +56,7 @@
             <label for="role">角色</label>
             <select id="role" name="role" required>
                 @foreach($assignableRoles as $role)
-                @php $roleLabel = \App\Models\User::ROLE_LABELS[$role] ?? $role; @endphp
+                @php $roleLabel = \App\Models\User::roleLabels()[$role] ?? $role; @endphp
                 <option value="{{ $role }}" @selected(old('role', $user->role ?? '') === $role)>{{ $roleLabel }}</option>
                 @endforeach
             </select>

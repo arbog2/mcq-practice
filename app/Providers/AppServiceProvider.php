@@ -13,6 +13,7 @@ use App\Policies\QuestionPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -46,11 +47,14 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer(['layouts.app', 'student.dashboard', 'admin.dashboard'], function ($view) {
-            $view->with('settings', [
-                'registration_enabled' => Setting::get('registration_enabled', false),
-                'registration_requires_approval' => Setting::get('registration_requires_approval', false),
-                'questions_per_session' => (int) Setting::get('questions_per_session', config('practice.questions_per_session')),
-            ]);
+            $settings = Cache::remember('app_settings', 3600, function () {
+                return [
+                    'registration_enabled' => Setting::get('registration_enabled', false),
+                    'registration_requires_approval' => Setting::get('registration_requires_approval', false),
+                    'questions_per_session' => (int) Setting::get('questions_per_session', config('practice.questions_per_session')),
+                ];
+            });
+            $view->with('settings', $settings);
         });
     }
 }

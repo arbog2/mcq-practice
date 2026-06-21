@@ -87,7 +87,7 @@
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->organizationUnit?->fullLabel() }}</td>
-                        <td>{{ \App\Models\User::ROLE_LABELS[$user->role] ?? $user->role }}</td>
+                        <td>{{ \App\Models\User::roleLabels()[$user->role] ?? $user->role }}</td>
                         <td>{{ $user->approval_status }}</td>
                         <td style="text-align:right;">
                             @if($user->role === 'student' && $user->approval_status === 'pending')

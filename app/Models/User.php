@@ -20,11 +20,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public const ROLE_STUDENT = 'student';
 
-    public const ROLE_LABELS = [
-        self::ROLE_SUPER_ADMIN => '超级管理员',
-        self::ROLE_ADMIN => '管理员',
-        self::ROLE_STUDENT => '学员',
-    ];
+    public static function roleLabels(): array
+    {
+        return [
+            self::ROLE_SUPER_ADMIN => __('roles.' . self::ROLE_SUPER_ADMIN),
+            self::ROLE_ADMIN => __('roles.' . self::ROLE_ADMIN),
+            self::ROLE_STUDENT => __('roles.' . self::ROLE_STUDENT),
+        ];
+    }
 
     public const APPROVAL_PENDING = 'pending';
 

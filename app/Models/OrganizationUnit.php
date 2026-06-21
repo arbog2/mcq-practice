@@ -34,7 +34,7 @@ class OrganizationUnit extends Model
         return $this->parent_id === null;
     }
 
-    public function isLeaf(): bool
+    public function isChild(): bool
     {
         return $this->parent_id !== null;
     }

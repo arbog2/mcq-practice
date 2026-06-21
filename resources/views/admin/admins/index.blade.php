@@ -45,7 +45,7 @@
                         <td>{{ $adminUser->username }}</td>
                         <td>{{ $adminUser->name }}</td>
                         <td>{{ $adminUser->email }}</td>
-                        <td>{{ \App\Models\User::ROLE_LABELS[$adminUser->role] ?? $adminUser->role }}</td>
+                        <td>{{ \App\Models\User::roleLabels()[$adminUser->role] ?? $adminUser->role }}</td>
                         <td>
                             @if($adminUser->role === \App\Models\User::ROLE_ADMIN && is_array($adminUser->managed_org_unit_ids))
                                 @if(empty($adminUser->managed_org_unit_ids))

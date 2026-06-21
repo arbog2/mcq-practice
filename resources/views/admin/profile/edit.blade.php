@@ -23,7 +23,7 @@
 
         <div>
             <label for="role">角色</label>
-            <input id="role" type="text" value="{{ \App\Models\User::ROLE_LABELS[$user->role] ?? $user->role }}" disabled>
+            <input id="role" type="text" value="{{ \App\Models\User::roleLabels()[$user->role] ?? $user->role }}" disabled>
         </div>
 
         <div>

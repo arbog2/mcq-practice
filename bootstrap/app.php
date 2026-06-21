@@ -14,7 +14,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'student' => \App\Http\Middleware\EnsureUserIsStudent::class,
-            'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -31,10 +30,11 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (\RuntimeException $e, $request) {
+            report($e);
+            $message = config('app.debug') ? $e->getMessage() : '操作失败，请稍后重试。';
             if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['message' => $e->getMessage()], 500);
+                return response()->json(['message' => $message], 500);
             }
-
-            return back()->withErrors(['error' => $e->getMessage()]);
+            return back()->withErrors(['error' => $message]);
         });
     })->create();

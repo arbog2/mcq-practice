@@ -221,8 +221,8 @@ class PaperController extends Controller
                 fputcsv($out, [
                     $attempt->user_id,
                     $attempt->user?->name ?? '',
-                    $org ? ($level1 ?: ($org->isLeaf() ? '' : $level2)) : '',
-                    $org && $org->isLeaf() ? $level2 : '',
+                    $org ? ($level1 ?: ($org->isChild() ? '' : $level2)) : '',
+                    $org && $org->isChild() ? $level2 : '',
                     $attempt->score,
                     $attempt->total_score,
                     $attempt->correct_count,
